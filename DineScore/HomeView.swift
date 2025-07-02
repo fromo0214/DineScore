@@ -6,10 +6,28 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct HomeView: View {
+    @AppStorage("userIsLoggedIn") var userIsLoggedIn: Bool = false
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack{
+            Text("DineScore")
+            
+            Button(action: {
+                do {
+                    try Auth.auth().signOut()
+                    userIsLoggedIn = false
+                    print("User logged out successfully.")
+                }catch{
+                    print("Error signing user out.")
+                }
+            }) {
+                Text("Logout")
+            }
+            
+        }.navigationBarBackButtonHidden(true)
     }
 }
 
