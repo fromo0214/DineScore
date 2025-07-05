@@ -4,7 +4,6 @@
 //
 //  Created by Fernando Romo on 5/28/25.
 //
-
 import SwiftUI
 import Firebase
 import FirebaseAuth
@@ -12,14 +11,23 @@ import GoogleSignIn
 import GoogleSignInSwift
 import AuthenticationServices
 
-struct ContentView: View {
+struct SignInView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showRegister = false
+    @State private var showForgotPassword = false
     @AppStorage("userIsLoggedIn") private var userIsLoggedIn = false
     @State private var errorMessage = ""
     @AppStorage("hasSeenSlideshow") private var hasSeenSlideshow: Bool = false
     
+    //keyboard focus fields destinations
+    enum Field:Hashable {
+        case email
+        case password
+    }
+    
+    //focusedField var to tab to next fields
+    @FocusState private var focusedField: Field?
     
     var body: some View {
         Group{
@@ -35,16 +43,12 @@ struct ContentView: View {
                 HomeView()
             }
         }
-        //        .onChange(of: hasSeenSlideshow) { error, newValue in
-        //            UserDefaults.standard.set(false, forKey: "hasSeenSlideshow")
-        //               hasSeenSlideshow = false
-        //                   print("🌀 ContentView detected change to hasSeenSlideshow = \(newValue)")
-        //               }
         .onAppear{
             // 🧪 TEMP: Reset flags for clean testing
             UserDefaults.standard.removeObject(forKey: "hasSeenSlideshow")
             UserDefaults.standard.removeObject(forKey: "userIsLoggedIn")
             
+            //checks if user is logged in and has seen slideshow or not
             _ = Auth.auth().addStateDidChangeListener{ auth, user in
                 if let user = user, user.isEmailVerified {
                     print("✅ Firebase Auth Listener: user logged in and verified")
@@ -63,9 +67,7 @@ struct ContentView: View {
         }
     }
     
-    
-    
-    
+    //sign in form view
     var signInScreen: some View{
         NavigationStack{
             ZStack{
@@ -83,14 +85,19 @@ struct ContentView: View {
                     
                     TextField("Email", text: $email)
                         .bold()
+                        .submitLabel(.next)
                         .foregroundColor(Color.textColor)
                         .textFieldStyle(.plain)
                         .autocapitalization(.none)
+                        .focused($focusedField, equals: .email)
                         .disableAutocorrection(true)
                         .placeholder(when: email.isEmpty){
                             Text("Email")
                                 .foregroundColor(Color.textColor)
                                 .bold()
+                        }
+                        .onSubmit{
+                            focusedField = .password
                         }
                     
                     Rectangle()
@@ -100,6 +107,8 @@ struct ContentView: View {
                     SecureField("Password", text:$password)
                         .foregroundColor(Color.textColor)
                         .textFieldStyle(.plain)
+                        .submitLabel(.done)
+                        .focused($focusedField, equals: .password)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                         .bold()
@@ -108,16 +117,20 @@ struct ContentView: View {
                                 .foregroundColor(Color.textColor)
                                 .bold()
                         }
+                        .onSubmit {
+                            //dismisses keyboard
+                            focusedField = nil
+                        }
                     
                     Rectangle()
                         .frame(width: 350, height: 1)
                         .foregroundColor(Color.textColor)
                     
                     Button{
-                        //sign in
+                        //sign in function
                         login()
                     }label:{
-                        Text("Sign In")
+                        Text("Sign In")	
                             .bold()
                             .foregroundColor(Color.backgroundColor)
                             .frame(width: 200, height: 40)
@@ -127,13 +140,14 @@ struct ContentView: View {
                             )
                     }
                     
+                    //displays error message
                     if !errorMessage.isEmpty{
                         Text(errorMessage)
                             .foregroundColor(.red)
                     }
                     
                     Button{
-                        //sign up
+                        //registration form view
                         showRegister = true
                     }label:{
                         Text("Don't have an account? Sign up!")
@@ -141,7 +155,8 @@ struct ContentView: View {
                             .underline()
                     }
                     Button{
-                        //forgot password
+                        //show forgot pasword view
+                        showForgotPassword = true
                     }label:{
                         Text("Forgot Password?")
                             .foregroundColor(Color.textColor)
@@ -219,6 +234,9 @@ struct ContentView: View {
             }.navigationDestination(isPresented: $showRegister){
                 RegisterView()
             }
+            .navigationDestination(isPresented:$showForgotPassword){
+                ForgotPasswordView()
+            }
         }
     }
     
@@ -262,6 +280,7 @@ struct ContentView: View {
     
 }
 
+//Access to hexadecimal colors
 extension Color {
     init(hex: Int, opacity: Double = 1) {
         self.init(
@@ -275,13 +294,14 @@ extension Color {
     }
 }
 
+//Colors for application
 extension Color{
     static let backgroundColor: Color = Color(hex: 0xf9f8f7)
     static let textColor: Color = Color(hex: 0x3e4949)
 }
 
 
-
+//placeholder text for fields when empty
 extension View {
     func placeholder<Content: View>(
         when shouldShow: Bool,
@@ -296,7 +316,7 @@ extension View {
 }
 
 #Preview {
-    ContentView()
+    SignInView()
         .onAppear {
             UserDefaults.standard.set(false, forKey: "userIsLoggedIn")
             UserDefaults.standard.set(false, forKey: "hasSeenSlideshow")

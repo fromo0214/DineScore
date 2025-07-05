@@ -19,105 +19,142 @@ struct RegisterView: View {
     @State private var errorMessage: String = ""
     @State private var emailMessage: String = ""
     
-    let backgroundColor: Color = Color(hex: 0xf9f8f7)
-    let textColor: Color = Color(hex: 0x3e4949)
+    //keyboard focus fields destinations
+    enum Field:Hashable{
+        case firstName
+        case lastName
+        case email
+        case password
+        case confirmPassword
+        case zipCode
+    }
+    
+    @FocusState private var focusedField: Field?
+        
     
     var body: some View {
         ZStack{
-            backgroundColor
+            Color.backgroundColor
                 .ignoresSafeArea()
-            VStack() {
+            VStack(spacing: 20) {
                 Image("dineScoreLogo")
                     .resizable()
                     .frame(width:200, height: 200)
                     .scaledToFit()
                 
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                 
                 TextField("First Name", text: $firstName)
                     .bold()
-                    .foregroundColor(textColor)
+                    .submitLabel(.next)
+                    .focused($focusedField, equals:.firstName)
+                    .foregroundColor(Color.textColor)
                     .textFieldStyle(.plain)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .placeholder(when: firstName.isEmpty){
                         Text("First Name")
-                            .foregroundColor(textColor)
+                            .foregroundColor(Color.textColor)
                             .bold()
+                    }
+                    .onSubmit {
+                        focusedField = .lastName
                     }
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                 
                 TextField("Last Name", text: $lastName)
                     .bold()
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
+                    .submitLabel(.next)
                     .textFieldStyle(.plain)
+                    .focused($focusedField, equals: .lastName)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .placeholder(when: lastName.isEmpty){
                         Text("Last Name")
-                            .foregroundColor(textColor)
+                            .foregroundColor(Color.textColor)
                             .bold()
+                    }
+                    .onSubmit {
+                        focusedField = .email
                     }
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                 
                 TextField("Email", text: $email)
                     .bold()
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
+                    .submitLabel(.next)
                     .disableAutocorrection(true)
+                    .focused($focusedField, equals: .email)
                     .autocapitalization(.none)
                     .textFieldStyle(.plain)
                     .placeholder(when: email.isEmpty){
                         Text("Email")
-                            .foregroundColor(textColor)
+                            .foregroundColor(Color.textColor)
                             .bold()
+                    }.onSubmit {
+                        focusedField = .password
                     }
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
+                    
                 
                 SecureField("Password", text:$password)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                     .textFieldStyle(.plain)
+                    .submitLabel(.next)
+                    .focused($focusedField, equals: .password)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .bold()
                     .placeholder(when: password.isEmpty){
                         Text("Password")
-                            .foregroundColor(textColor)
+                            .foregroundColor(Color.textColor)
                             .bold()
+                    }
+                    .onSubmit {
+                        focusedField = .confirmPassword
                     }
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                 
                 SecureField("Confirm Password", text:$confirmPassword)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                     .textFieldStyle(.plain)
+                    .submitLabel(.next)
+                    .focused($focusedField, equals: .confirmPassword)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .bold()
                     .placeholder(when: confirmPassword.isEmpty){
                         Text("Confirm Password")
-                            .foregroundColor(textColor)
+                            .foregroundColor(Color.textColor)
                             .bold()
+                    }
+                    .onSubmit {
+                        focusedField = .zipCode
                     }
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                 
                 TextField("Zip Code", text: $zipCode)
                     .bold()
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
+                    .submitLabel(.done)
+                    .focused($focusedField, equals: .zipCode)
                     .disableAutocorrection(true)
                     .textFieldStyle(.plain)
                     .onChange(of: zipCode){ oldValue, newValue in
@@ -131,15 +168,18 @@ struct RegisterView: View {
                     }
                     .placeholder(when: zipCode.isEmpty){
                         Text("Zip Code")
-                            .foregroundColor(textColor)
+                            .foregroundColor(Color.textColor)
                             .bold()
+                    }
+                    .onSubmit {
+                        focusedField = nil
                     }
                 
                 
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(textColor)
+                    .foregroundColor(Color.textColor)
                 
                 Button{
                     //sign in
@@ -148,20 +188,14 @@ struct RegisterView: View {
                 }label:{
                     Text("Sign Up")
                         .bold()
-                        .foregroundColor(backgroundColor)
+                        .foregroundColor(Color.backgroundColor)
                         .frame(width: 200, height: 40)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(textColor)
+                                .foregroundColor(Color.textColor)
                         )
                 }
-                //              Button{
-                //                                    //log in
-                //                                }label:{
-                //                                    Text("Already have an account? Log in!")
-                //                                        .foregroundColor(textColor)
-                //                                        .underline()
-                //                                }
+               
                 if !errorMessage.isEmpty{
                     Text(errorMessage)
                         .foregroundColor(.red)
@@ -210,23 +244,6 @@ struct RegisterView: View {
                 //Marks slideshow as not seen
                 UserDefaults.standard.set(false, forKey: "hasSeenSlideshow")
                 print("New user created, slide show not seen.")
-                //if user creation is successful and we get a valid user id
-                //            else if let uid = result?.user.uid{
-                //                //Gets a reference of the firestore database
-                //                let db = Firestore.firestore()
-                //
-                //                // Create a new document in the "users" collection with the user's UID as the document ID
-                //                db.collection("users").document(uid).setData([
-                //                    "email": email,
-                //                    "zipCode": zipCode,
-                ////                    "createdAt": TimeStamp()
-                //                ]){err in
-                //                    if let err = err {
-                //                        errorMessage = "Failed to save user data: \(err.localizedDescription)"
-                //
-                //                    }else{
-                //                        print("User registered and data saved!")
-                //                    }}
                 
             }
         }
