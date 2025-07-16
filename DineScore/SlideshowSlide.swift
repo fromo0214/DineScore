@@ -12,5 +12,6 @@ struct SlideshowSlide: Identifiable{
     let title:String
     let imageName: String
     let description: String
+    var imageNameTwo: String = ""
     var showButton = false
 }
