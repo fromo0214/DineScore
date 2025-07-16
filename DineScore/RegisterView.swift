@@ -116,11 +116,7 @@ struct RegisterView: View {
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .bold()
-                    .placeholder(when: password.isEmpty){
-                        Text("Password")
-                            .foregroundColor(Color.textColor)
-                            .bold()
-                    }
+                   
                     .onSubmit {
                         focusedField = .confirmPassword
                     }
