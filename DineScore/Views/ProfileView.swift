@@ -9,7 +9,12 @@ import SwiftUI
 
 struct ProfileView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack(alignment: .center){
+            VStack{
+                Image(systemName: "person.fill")
+                    .font(Font.system(size: 100))
+            }
+        }
     }
 }
 

@@ -9,8 +9,8 @@ import SwiftUI
 
 struct SettingsView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+        Image(systemName: "gearshape.fill")
+            .font(Font.system(size: 100))    }
 }
 
 #Preview {
