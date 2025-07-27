@@ -10,8 +10,10 @@ import Firebase
 import UIKit
 
 
+
 @main
 struct DineScoreApp: App {
+
     
     init(){
         FirebaseApp.configure()

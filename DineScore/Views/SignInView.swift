@@ -74,26 +74,33 @@ struct SignInView: View {
                 Color.backgroundColor
                     .ignoresSafeArea()
                 VStack() {
-                    Image("dineScoreLogo")
+                    
+                    Image("dineScoreSymbol")
                         .resizable()
-                        .frame(width:200, height: 200)
+                        .frame(width:100, height: 100)
                         .scaledToFit()
+                    
+                    Text("DineScore")
+                        .bold()
+                        .font(.largeTitle)
+                        .foregroundColor(Color.accentColor)
+                        .padding(.bottom, 20)
                     
                     Text("To continue sign in to DineScore!")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                     
                     TextField("Email", text: $email)
                         .bold()
                         .submitLabel(.next)
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                         .textFieldStyle(.plain)
                         .autocapitalization(.none)
                         .focused($focusedField, equals: .email)
                         .disableAutocorrection(true)
                         .placeholder(when: email.isEmpty){
                             Text("Email")
-                                .foregroundColor(Color.textColor)
+                                .foregroundColor(Color.accentColor)
                                 .bold()
                         }
                         .onSubmit{
@@ -102,10 +109,10 @@ struct SignInView: View {
                     
                     Rectangle()
                         .frame(width: 350, height: 1)
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                     
                     SecureField("Password", text:$password)
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                         .textFieldStyle(.plain)
                         .submitLabel(.done)
                         .focused($focusedField, equals: .password)
@@ -114,7 +121,7 @@ struct SignInView: View {
                         .bold()
                         .placeholder(when: password.isEmpty){
                             Text("Password")
-                                .foregroundColor(Color.textColor)
+                                .foregroundColor(Color.accentColor)
                                 .bold()
                         }
                         .onSubmit {
@@ -124,7 +131,7 @@ struct SignInView: View {
                     
                     Rectangle()
                         .frame(width: 350, height: 1)
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                     
                     Button{
                         //sign in function
@@ -136,7 +143,7 @@ struct SignInView: View {
                             .frame(width: 200, height: 40)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.textColor)
+                                    .foregroundColor(Color.accentColor)
                             )
                     }
                     
@@ -151,7 +158,7 @@ struct SignInView: View {
                         showRegister = true
                     }label:{
                         Text("Don't have an account? Sign up!")
-                            .foregroundColor(Color.textColor)
+                            .foregroundColor(Color.accentColor)
                             .underline()
                     }
                     Button{
@@ -159,11 +166,11 @@ struct SignInView: View {
                         showForgotPassword = true
                     }label:{
                         Text("Forgot Password?")
-                            .foregroundColor(Color.textColor)
+                            .foregroundColor(Color.accentColor)
                             .underline()
                     }
                     Text("Or")
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                         .bold()
                     
                     Button(action: {
@@ -298,6 +305,7 @@ extension Color {
 extension Color{
     static let backgroundColor: Color = Color(hex: 0xf9f8f7)
     static let textColor: Color = Color(hex: 0x3e4949)
+    static let accentColor = Color(hex: 0x4b6e7f) // slate blue-gray
 }
 
 

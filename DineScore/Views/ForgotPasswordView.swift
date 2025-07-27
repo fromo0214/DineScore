@@ -18,33 +18,39 @@ struct ForgotPasswordView: View {
             Color.backgroundColor
                 .ignoresSafeArea()
             VStack{
-                Image("dineScoreLogo")
+                Image("dineScoreSymbol")
                     .resizable()
                     .scaledToFit()
-                    .frame(width:200, height: 200)
+                    .frame(width:100, height: 100)
+                    
+                Text("DineScore")
+                    .bold()
+                    .foregroundColor(Color.accentColor)
+                    .font(.largeTitle)
+                    .padding(.bottom, 20)
                 
                 Text("Input email address to send reset password link!")
                     .multilineTextAlignment(.center)
-                    .foregroundColor(Color.textColor)
+                    .foregroundColor(Color.accentColor)
                     .font(.callout)
                     .bold()
                 
                 TextField("Email", text: $email)
                     .bold()
-                    .foregroundColor(Color.textColor)
+                    .foregroundColor(Color.accentColor)
                     .submitLabel(.done)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .textFieldStyle(.plain)
                     .placeholder(when: email.isEmpty){
                         Text("Email")
-                            .foregroundColor(Color.textColor)
+                            .foregroundColor(Color.accentColor)
                             .bold()
                     }
                 
                 Rectangle()
                     .frame(width: 350, height: 1)
-                    .foregroundColor(Color.textColor)
+                    .foregroundColor(Color.accentColor)
                 
                 Button{
                     //func to send link to email
@@ -57,7 +63,7 @@ struct ForgotPasswordView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 10, style:
                                     .continuous)
-                                .foregroundColor(Color.textColor)
+                                .foregroundColor(Color.accentColor)
                         )
                 }
                 

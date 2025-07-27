@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeContentView: View {
     @Binding var searchText: String
     var body: some View {
+        
         ScrollView{
             VStack{
                 //logo
@@ -17,35 +18,39 @@ struct HomeContentView: View {
                     Image("dineScoreSymbol")
                         .resizable()
                         .frame(width:50, height:50)
+                        .padding(.leading, 60)
+                        .foregroundColor(Color.accentColor)
                     Text("DineScore")
                         .bold()
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                         .font(.title)
                     Spacer()
                 }
-                .padding(.top, 16)
+                .padding(.top, 1)
                 .padding(.leading, 16)
                 
                 //search bar
                 HStack{
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
+                        .padding(.leading, -20)
                     TextField("Search restaurants, dishes, ...", text: $searchText)
                         .disableAutocorrection(true)
                         .autocapitalization(.none)
-                        .foregroundColor(Color.textColor)
+                        .foregroundColor(Color.accentColor)
                         .bold()
                         .placeholder(when: searchText.isEmpty){
                             Text("Search restaurants, dishes, ...")
-                                .foregroundColor(Color.textColor)
+                                .foregroundColor(Color.accentColor)
                                 .bold()
                         }
                     
                 }.padding(.leading, 16)
+                    .padding(.top, 5)
                 
                 Rectangle()
-                    .frame(width: 350, height:1)
-                    .foregroundColor(Color.textColor)
+                    .frame(width: 360, height:1)
+                    .foregroundColor(Color.accentColor)
                 
                 //search bar buttons
                 HStack{
@@ -59,7 +64,7 @@ struct HomeContentView: View {
                             .frame(width: 60, height: 40)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.textColor)
+                                    .foregroundColor(Color.accentColor)
                             )
                     }
                     Button{
@@ -72,7 +77,7 @@ struct HomeContentView: View {
                             .frame(width: 70, height: 40)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.textColor)
+                                    .foregroundColor(Color.accentColor)
                             )
                     }
                     Button{
@@ -85,7 +90,7 @@ struct HomeContentView: View {
                             .frame(width: 70, height: 40)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.textColor)
+                                    .foregroundColor(Color.accentColor)
                             )
                     }
                     Button{
@@ -98,7 +103,7 @@ struct HomeContentView: View {
                             .frame(width: 90, height: 40)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.textColor)
+                                    .foregroundColor(Color.accentColor)
                             )
                     }
                 }
@@ -115,7 +120,7 @@ struct HomeContentView: View {
                             .foregroundColor(Color.backgroundColor)
                             .frame(width:180,height:80)
                             .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(Color.textColor))
+                                .foregroundColor(Color.accentColor))
                     }
                 }.padding()
                 
@@ -130,7 +135,7 @@ struct HomeContentView: View {
                             .foregroundColor(Color.backgroundColor)
                             .frame(width:150,height:80)
                             .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(Color.textColor))
+                                .foregroundColor(Color.accentColor))
                     }
                 }.padding()
                 
@@ -146,7 +151,7 @@ struct HomeContentView: View {
                             .foregroundColor(Color.backgroundColor)
                             .frame(width:180,height:80)
                             .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(Color.textColor))
+                                .foregroundColor(Color.accentColor))
                     }
                 }.padding()
             }.navigationBarBackButtonHidden(true)
@@ -155,4 +160,5 @@ struct HomeContentView: View {
         }
     }
 }
+
 

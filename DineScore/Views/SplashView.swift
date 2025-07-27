@@ -11,12 +11,17 @@ struct SplashView: View {
             } else {
                 Color(Color.backgroundColor) // Exact app background
                     .ignoresSafeArea()
-
-                Image("dineScoreLogo") // updated image
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 400, height: 400)
-                    .transition(.opacity)
+                VStack{
+                    Image("dineScoreSymbol") // updated image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 150, height: 150)
+                        .transition(.opacity)
+                    Text("DineScore")
+                        .bold()
+                        .foregroundColor(Color.accentColor)
+                        .font(.system(size: 70))
+                }
             }
         }
         .onAppear {
