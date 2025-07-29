@@ -9,7 +9,6 @@ import SwiftUI
 import FirebaseAuth
 
 struct HomeView: View {
-    @AppStorage("userIsLoggedIn") var userIsLoggedIn: Bool = false
     @State private var searchText: String = ""
     @State private var selectedTab: AppTab = .home
     
@@ -35,7 +34,6 @@ struct HomeView: View {
                     SettingsView()
                 }
             }
-            
             
             //Navigation Bar
             VStack{

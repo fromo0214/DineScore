@@ -154,6 +154,7 @@ struct HomeContentView: View {
                                 .foregroundColor(Color.accentColor))
                     }
                 }.padding()
+                
             }.navigationBarBackButtonHidden(true)
                 .frame(width: 350)
                 .frame(maxWidth: .infinity)
