@@ -24,3 +24,7 @@ An iOS restaurant review app that allows users to rate food and service separate
 1. Clone the repo  
    ```bash
    git clone https://github.com/yourusername/DineScore.git
+
+2. Open the .xcodeproj on Xcode.
+
+3. Run the app on the simulator or your iPhone device.
