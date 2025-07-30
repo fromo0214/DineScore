@@ -1,5 +1,5 @@
 //
-//  UserReviewView.swift
+//  UserSocialsView.swift
 //  DineScore
 //
 //  Created by Fernando Romo on 7/28/25.

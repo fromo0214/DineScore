@@ -27,7 +27,7 @@ struct HomeView: View {
                 case .home:
                     HomeContentView(searchText: $searchText)
                 case .profile:
-                    ProfileView()
+                    UserProfileView()
                 case .activity:
                     ActivityView()
                 case .settings:
