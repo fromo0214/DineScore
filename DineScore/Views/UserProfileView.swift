@@ -156,7 +156,6 @@ struct UserProfileView: View {
                     .navigationDestination(isPresented: $showUserReviews){
                         UserReviewView()
                     }
-
                     .navigationDestination(isPresented: $showUserLists){
                         UserListsView()
                     }.navigationDestination(isPresented: $showUserSocials){

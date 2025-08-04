@@ -47,6 +47,7 @@ struct SlideshowView: View {
             ZStack{
                 Color.backgroundColor
                     .ignoresSafeArea()
+                
                 VStack{
                     TabView(selection: $currentIndex) {
                         ForEach(0..<slides.count, id: \.self) { index in

@@ -12,6 +12,8 @@ struct HomeView: View {
     @State private var searchText: String = ""
     @State private var selectedTab: AppTab = .home
     
+    @AppStorage("hasRequestedNotifications") private var hasRequestedNotifications = false
+    
     enum AppTab {
         case home, profile, activity, settings
     }
@@ -56,6 +58,7 @@ struct HomeView: View {
                 
                 
             }.ignoresSafeArea(edges: .bottom)
+           
         
 
     }
