@@ -10,6 +10,11 @@ import SwiftUI
 struct NotificationsView: View {
     
     @Environment(\.dismiss) var dismiss
+    
+    @State private var reviewAlerts: Bool = true
+    @State private var restaurantRecommendations: Bool = true
+    @State private var badgeAlerts: Bool = true
+    @State private var waitTimeAlert : Bool = true
 
     var body: some View {
         NavigationStack{
@@ -18,13 +23,24 @@ struct NotificationsView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-
+                    List{
+                        settingsButton(title: "Review Alerts", isOn: $reviewAlerts){_ in
+                            
+                        }
+                        settingsButton(title: "Restaurant Recommendations", isOn: $restaurantRecommendations){_ in
+                            
+                        }
+                        settingsButton(title: "Badge/Milestone Alert", isOn: $badgeAlerts){_ in
+                            
+                        }
+                        settingsButton(title: "Wait Time Alert\n(Liked Restaurants Only)", isOn: $waitTimeAlert){_ in
+                            
+                        }
                         
-                    
-                    
-                    
-                    
-                }.padding()
+                        
+                        
+                    }.listRowBackground(Color.backgroundColor)
+                }
             }
         } .navigationBarBackButtonHidden(true)
             .navigationTitle("")
@@ -61,9 +77,21 @@ struct NotificationsView: View {
         
     }
     
-
-
+    func reviewAlertsNotifications() {
+        UserDefaults.standard.set(reviewAlerts, forKey: "reviewAlerts")
+    }
     
-
     
+    func settingsButton(title: String, isOn: Binding<Bool>, onToggle: @escaping (Bool) -> Void) -> some View {
+        Toggle(title, isOn: isOn)
+        //if switch is toggled then notification will
+            .onChange(of: isOn.wrappedValue){ newValue, error in
+                    onToggle(newValue)
+            }
+            .bold()
+            .foregroundColor(Color.accentColor)
+            .padding()
+            .font(.system(size: 18))
+            .multilineTextAlignment(.leading)
+    }
 }

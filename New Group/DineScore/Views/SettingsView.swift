@@ -10,7 +10,7 @@ import FirebaseAuth
 
 struct SettingsView: View {
     
-    @AppStorage("userIsLoggedIn") var userIsLoggedIn: Bool = false
+    
     
     @State var showAppPreferences = false
     @State var showNotifications = false
@@ -70,7 +70,7 @@ struct SettingsView: View {
             }.navigationDestination(isPresented: $showSupport){
                 SupportView()
             }.navigationDestination(isPresented: $showAccountSettings){
-                AccountSettingsView()
+                UserAccountSettingsView()
             }
         }
     }
@@ -85,6 +85,7 @@ struct SettingsView: View {
                 Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundColor(.accentColor)
+                    .bold()
             }.padding()
         }
     }

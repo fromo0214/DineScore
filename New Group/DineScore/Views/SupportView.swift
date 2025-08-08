@@ -18,13 +18,24 @@ struct SupportView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-
+                    List{
+                        
+                        settingsButton(title: "Contact Support"){
+                            
+                        }
+                        settingsButton(title: "Report A Bug"){
+                            
+                        }
+                        settingsButton(title: "Suggest A Feature (Feedback)"){
+                            
+                        }
+                    }
                         
                     
                     
                     
                     
-                }.padding()
+                }
             }
         } .navigationBarBackButtonHidden(true)
             .navigationTitle("")
@@ -61,6 +72,20 @@ struct SupportView: View {
         
     }
 
+    func settingsButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action){
+            HStack{
+                Text(title)
+                    .font(.system(size: 18))
+                    .bold()
+                    .foregroundColor(.accentColor)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.accentColor)
+                    .bold()
+            }.padding()
+        }
+    }
     
 }
 

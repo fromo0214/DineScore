@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Application requires full screen</key>
-	<string>YES</string>
+	<key>Privacy - Local Notifications Usage Description</key>
+	<string>We use notifications to alert you about reviews, recommendations, and wait times.
+</string>
 </dict>
 </plist>

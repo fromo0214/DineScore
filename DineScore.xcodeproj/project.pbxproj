@@ -57,10 +57,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		F9F4D2472DE8095C004503B8 = {
+		F9456D2C2E45AE7500401285 /* New Group */ = {
 			isa = PBXGroup;
 			children = (
 				F9F4D2522DE8095C004503B8 /* DineScore */,
+			);
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		F9F4D2472DE8095C004503B8 = {
+			isa = PBXGroup;
+			children = (
+				F9456D2C2E45AE7500401285 /* New Group */,
 				F9F4D2512DE8095C004503B8 /* Products */,
 			);
 			sourceTree = "<group>";
