@@ -57,18 +57,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		F9456D2C2E45AE7500401285 /* New Group */ = {
+		F9456D2C2E45AE7500401285 /* Project */ = {
 			isa = PBXGroup;
 			children = (
 				F9F4D2522DE8095C004503B8 /* DineScore */,
 			);
-			path = "New Group";
+			path = Project;
 			sourceTree = "<group>";
 		};
 		F9F4D2472DE8095C004503B8 = {
 			isa = PBXGroup;
 			children = (
-				F9456D2C2E45AE7500401285 /* New Group */,
+				F9456D2C2E45AE7500401285 /* Project */,
 				F9F4D2512DE8095C004503B8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -304,7 +304,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"DineScore/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Project/DineScore/Preview Content\"";
 				DEVELOPMENT_TEAM = RD2BV423MM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -342,7 +342,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"DineScore/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Project/DineScore/Preview Content\"";
 				DEVELOPMENT_TEAM = RD2BV423MM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
