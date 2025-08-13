@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F98A05462E4C11A200ED90D1 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = F98A05452E4C11A200ED90D1 /* FirebaseStorage */; };
+		F98A05482E4C11A200ED90D1 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = F98A05472E4C11A200ED90D1 /* FirebaseStorageCombine-Community */; };
 		F9A680CE2E03B5300086564E /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F9A680CD2E03B5300086564E /* GoogleSignIn */; };
 		F9A680D02E03B5300086564E /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F9A680CF2E03B5300086564E /* GoogleSignInSwift */; };
 		F9A680D32E03BA410086564E /* FacebookLogin in Frameworks */ = {isa = PBXBuildFile; productRef = F9A680D22E03BA410086564E /* FacebookLogin */; };
@@ -47,8 +49,10 @@
 			files = (
 				F9A680D32E03BA410086564E /* FacebookLogin in Frameworks */,
 				F9CF64742DF1442E005CA87A /* FirebaseAuth in Frameworks */,
+				F98A05482E4C11A200ED90D1 /* FirebaseStorageCombine-Community in Frameworks */,
 				F9A680D52E03BA410086564E /* FacebookShare in Frameworks */,
 				F9CF64762DF1442E005CA87A /* FirebaseFirestore in Frameworks */,
+				F98A05462E4C11A200ED90D1 /* FirebaseStorage in Frameworks */,
 				F9A680CE2E03B5300086564E /* GoogleSignIn in Frameworks */,
 				F9A680D02E03B5300086564E /* GoogleSignInSwift in Frameworks */,
 			);
@@ -107,6 +111,8 @@
 				F9A680CF2E03B5300086564E /* GoogleSignInSwift */,
 				F9A680D22E03BA410086564E /* FacebookLogin */,
 				F9A680D42E03BA410086564E /* FacebookShare */,
+				F98A05452E4C11A200ED90D1 /* FirebaseStorage */,
+				F98A05472E4C11A200ED90D1 /* FirebaseStorageCombine-Community */,
 			);
 			productName = DineScore;
 			productReference = F9F4D2502DE8095C004503B8 /* DineScore.app */;
@@ -423,6 +429,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		F98A05452E4C11A200ED90D1 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseStorage;
+		};
+		F98A05472E4C11A200ED90D1 /* FirebaseStorageCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = "FirebaseStorageCombine-Community";
+		};
 		F9A680CD2E03B5300086564E /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F9A680CC2E03B5300086564E /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
