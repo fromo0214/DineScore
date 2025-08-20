@@ -16,157 +16,74 @@ struct UserProfileView: View {
     @State var zipCode: String = "90247"
     @State var dob : Date = Date()
     
-    //shows views
-    @State var showUserReviews: Bool = false
-    @State var showUserLists: Bool = false
-    @State var showUserSocials: Bool = false
-    @State var showUserLikes: Bool = false
+    @State var selectedTab: ProfileTab = .profile
     
-
+    
+    enum ProfileTab: String, CaseIterable, Identifiable{
+        case profile = "Profile"
+        case lists = "Lists"
+        case reviews = "Reviews"
+        case socials = "Socials"
+        case likes = "Likes"
+        var id: String {self.rawValue}
+    }
+    
     
     var body: some View {
-        NavigationStack{
-        ZStack(alignment: .topLeading){
+        
+        ZStack{
             Color.backgroundColor
                 .ignoresSafeArea()
-            VStack{
-                HStack{
-                    Spacer()
-                    VStack{
-                        
-                        //--TODO: CHANGE TO BUTTON
-                        Image(systemName: "person.crop.circle.fill")
-                            .foregroundColor(Color.accentColor)
-                            .font(Font.system(size:90))
-                    
-                        
-                        Text("Taster 🍴")
-                            .bold()
-                            .foregroundColor(Color.textColor)
-                        Rectangle()
-                            .frame(width:100, height: 5)
-                            .foregroundColor(Color.accentColor)
-                            .padding(.bottom, 5)
-                        Text("Followers: 10")
-                            .foregroundColor(Color.accentColor)
-                            .bold()
-                            .padding(.bottom, 5)
-                        Text("Following: 10")
-                            .foregroundColor(Color.accentColor)
-                            .bold()
-                        
-                    }.padding(.bottom, 60)
-                        .padding(.leading)
-                    
-                    
-                    VStack(){
-                        Form{
-                            Section{
-                                TextField("First Name", text: $firstName)
-                                TextField("Last Name", text: $lastName)
-                                TextField("Email", text: $email)
-                                TextField("Zip Code", text: $zipCode)
-                                    .onChange(of: zipCode){ oldValue, newValue in
-                                        //Allow only digits (limit to 5 digits
-                                        let filtered = newValue.filter{$0.isNumber}
-                                        if filtered.count > 5 {
-                                            zipCode = String(filtered.prefix(5))
-                                        }else{
-                                            zipCode = filtered
-                                        }
-                                    }
-                                DatePicker("Date of Birth:", selection:$dob, displayedComponents: .date)
-                                    .datePickerStyle(.compact)
-                            }
-                            .listRowBackground(Color.white.opacity(0.1))
-                        }.frame(width:300, height: 285)
-                            .scrollContentBackground(.hidden)
-                            .background(Color.backgroundColor)
-                            .cornerRadius(10)
-                    }
-                }
-                
             
-                    VStack{
-                        Button(action: {
-                            // show user reviews
-                            showUserReviews = true
-                        }) {
-                            Text("Reviews                                       >")
-                                .bold()
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 350, height: 50)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .foregroundColor(.accentColor)
-                                )
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            // show user created lists
-                            showUserLists = true
-                        }) {
-                            Text("Lists                                      >")
-                                .bold()
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 350, height: 50)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .foregroundColor(.accentColor)
-                                )
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            // show user socials
-                            showUserSocials = true
-                        }) {
-                            Text("Socials                                      >")
-                                .bold()
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 350, height: 50)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .foregroundColor(.accentColor)
-                                )
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            // show user likes
-                            showUserLikes = true
-                        }) {
-                            Text("Likes                                      >")
-                                .bold()
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 350, height: 50)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .foregroundColor(.accentColor)
-                                )
-                        }
-                        
-                        Spacer()
-                        
-                    }
-                    .navigationDestination(isPresented: $showUserReviews){
-                        UserReviewView()
-                    }
-                    .navigationDestination(isPresented: $showUserLists){
+            VStack(spacing:0){
+                HStack{
+                    navButton(title:"Profile", tab: .profile)
+                    Spacer()
+                    navButton(title:"Lists", tab:.lists)
+                    Spacer()
+                    navButton(title:"Reviews", tab:.reviews)
+                    Spacer()
+                    navButton(title:"Socials", tab:.socials)
+                    Spacer()
+                    navButton(title:"Likes", tab:.likes)
+                }.shadow(radius: 5)
+                    .frame(width:350, height:50)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .background(Color.textColor)
+                Spacer()
+                
+                
+                
+                Group{
+                    switch selectedTab {
+                    case .profile:
+                        UserProfileContentView()
+                    case .lists:
                         UserListsView()
-                    }.navigationDestination(isPresented: $showUserSocials){
+                    case .reviews:
+                        UserReviewView()
+                    case .socials:
                         UserSocialsView()
-                    }.navigationDestination(isPresented: $showUserLikes){
+                    case .likes:
                         UserLikesView()
                     }
                 }
+                
             }
         }
     }
+
+    func navButton(title: String, tab: ProfileTab) -> some View {
+            Button(action: {
+                selectedTab = tab
+            }) {
+                Text(title)
+                    .font(.system(size: 14))
+                    .foregroundColor(selectedTab == tab ? Color.backgroundColor : .gray)
+            }
+        }
+    
+                              
 }
 
 #Preview {

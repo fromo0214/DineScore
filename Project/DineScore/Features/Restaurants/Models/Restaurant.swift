@@ -23,14 +23,14 @@ struct Restaurant: Identifiable, Codable{
     var status: String //"pending", "active"
     var normalizedKey: String //for duplicate prevention
     
-    var latitutde: Double
+    var latitude: Double
     var longitude: Double
     
     @ServerTimestamp var createdAt: Timestamp?
     @ServerTimestamp var updatedAt: Timestamp?
     
     var coordinate: CLLocationCoordinate2D? {
-        .init(latitude: latitutde, longitude: longitude)
+        .init(latitude: latitude, longitude: longitude)
     }
     
     //nromalized key helper

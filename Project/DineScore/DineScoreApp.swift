@@ -22,7 +22,7 @@ struct DineScoreApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SplashView()
+            HomeView()
         }
     }
 }

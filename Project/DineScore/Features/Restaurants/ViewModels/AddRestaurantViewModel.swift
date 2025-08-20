@@ -63,7 +63,7 @@ final class AddRestaurantViewModel: ObservableObject{
         let key = Restaurant.normalizedKey(name: name, address: address)
         
         //create a restaurant object with all the fields from the form
-        let base = Restaurant(id: nil, name: name.trimmingCharacters(in: .whitespaces), address: address.trimmingCharacters(in: .whitespaces), cuisine: cuisine, priceLevel: priceLevel, photoURL: nil, avgFoodScore: 0, avgFoodServiceScore: 0, reviewCount: 0, ownerId: "", status: "active", normalizedKey: key, latitutde: 0, longitude: 0, createdAt: nil, updatedAt: nil)
+        let base = Restaurant(id: nil, name: name.trimmingCharacters(in: .whitespaces), address: address.trimmingCharacters(in: .whitespaces), cuisine: cuisine, priceLevel: priceLevel, photoURL: nil, avgFoodScore: 0, avgFoodServiceScore: 0, reviewCount: 0, ownerId: "", status: "active", normalizedKey: key, latitude: 0, longitude: 0, createdAt: nil, updatedAt: nil)
         
         //Ask firestore to store this restaurant in the repository
         //The repo will: check if a restaurant with this normalized key already exists

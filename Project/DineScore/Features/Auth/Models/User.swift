@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseFirestore
 import SwiftUI
 
 struct User: Identifiable, Codable {
