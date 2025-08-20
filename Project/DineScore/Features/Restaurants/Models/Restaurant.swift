@@ -34,7 +34,7 @@ struct Restaurant: Identifiable, Codable{
     }
     
     //nromalized key helper
-    func normalizedKey(name: String, address: String) -> String {
+    static func normalizedKey(name: String, address: String) -> String {
         let base = (name + "|" + address)
             .lowercased()
             .trimmingCharacters(in: .whitespacesAndNewlines)

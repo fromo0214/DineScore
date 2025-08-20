@@ -13,6 +13,8 @@ struct ForgotPasswordView: View {
     @State var errorMessage: String = ""
     @State var emailMessage: String = ""
     
+    @StateObject private var vm = AuthViewModel()
+    
     var body: some View {
         ZStack{
             Color.backgroundColor
@@ -35,14 +37,14 @@ struct ForgotPasswordView: View {
                     .font(.callout)
                     .bold()
                 
-                TextField("Email", text: $email)
+                TextField("Email", text: $vm.email)
                     .bold()
                     .foregroundColor(Color.accentColor)
                     .submitLabel(.done)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .textFieldStyle(.plain)
-                    .placeholder(when: email.isEmpty){
+                    .placeholder(when: vm.email.isEmpty){
                         Text("Email")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -54,7 +56,7 @@ struct ForgotPasswordView: View {
                 
                 Button{
                     //func to send link to email
-                    sendResetLink()
+                    Task {await vm.sendResetLink() }
                 }label: {
                     Text("Send Reset Link")
                         .bold()
@@ -67,15 +69,15 @@ struct ForgotPasswordView: View {
                         )
                 }
                 
-                if !errorMessage.isEmpty {
-                    Text(errorMessage)
+                if !vm.errorMessage.isEmpty {
+                    Text(vm.errorMessage)
                         .foregroundColor(.red)
                         .bold()
                         .multilineTextAlignment(.center)
                 }
                 
-                if !emailMessage.isEmpty {
-                    Text(emailMessage)
+                if !vm.emailMessage.isEmpty {
+                    Text(vm.emailMessage)
                         .foregroundColor(.blue)
                         .bold()
                         .multilineTextAlignment(.center)
@@ -85,29 +87,6 @@ struct ForgotPasswordView: View {
             }.frame(width: 350)
         }
        
-    }
-    
-    func sendResetLink(){
-        Auth.auth().sendPasswordReset(withEmail: email){ error in
-            
-            if let error = error as NSError?{
-                
-                //convert to Firebase AuthErrorCode
-                if let errorCode = AuthErrorCode(rawValue: error.code){
-                    switch errorCode{
-                    case .invalidEmail, .invalidRecipientEmail:
-                        errorMessage = "Invalid email address."
-                    default:
-                        errorMessage = "Something went wrong. Please try again."
-                    }
-                }else{
-                    errorMessage = "Unexpected error occured."
-                }
-            }else{
-                emailMessage = "Password reset link sent!"
-                errorMessage = ""
-            }
-        }
     }
 
 }
