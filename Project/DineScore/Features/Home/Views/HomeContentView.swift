@@ -9,112 +9,115 @@ import SwiftUI
 
 struct HomeContentView: View {
     @Binding var searchText: String
+    @State private var showAddRestaurant = false
+    
     var body: some View {
-        
+    
     
         ScrollView{
-            VStack{
-                //logo
-                HStack{
-                    Image("dineScoreSymbol")
-                        .resizable()
-                        .frame(width:50, height:50)
-                        .padding(.leading, 60)
-                        .foregroundColor(Color.accentColor)
-                    Text("DineScore")
-                        .bold()
-                        .foregroundColor(Color.accentColor)
-                        .font(.title)
-                    Spacer()
-                }
-                .padding(.top, 1)
-                .padding(.leading, 16)
-                
-                //search bar
-                HStack{
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(Color.accentColor)
-                        .padding(.leading, -20)
-                    TextField("Search restaurants, dishes, ...", text: $searchText)
-                        .disableAutocorrection(true)
-                        .autocapitalization(.none)
-                        .foregroundColor(Color.accentColor)
-                        .bold()
-                        .placeholder(when: searchText.isEmpty){
-                            Text("Search restaurants, dishes, ...")
-                                .foregroundColor(Color.accentColor)
-                                .bold()
-                        }
+            
+                VStack{
+                    //logo
+                    HStack{
+                        Image("dineScoreSymbol")
+                            .resizable()
+                            .frame(width:50, height:50)
+                            .padding(.leading, 60)
+                            .foregroundColor(Color.accentColor)
+                        Text("DineScore")
+                            .bold()
+                            .foregroundColor(Color.accentColor)
+                            .font(.title)
+                        Spacer()
+                    }
+                    .padding(.top, 1)
+                    .padding(.leading, 16)
                     
-                }.padding(.leading, 16)
-                    .padding(.top, 5)
-                
-                Rectangle()
-                    .frame(width: 360, height:1)
-                    .foregroundColor(Color.accentColor)
-                
-                //search bar buttons
-                HStack{
-                    Button{
-                        
-                    }label:{
-                        Text("Food")
+                    //search bar
+                    HStack{
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(Color.accentColor)
+                        TextField("Search restaurants, dishes, ...", text: $searchText)
+                            .disableAutocorrection(true)
+                            .autocapitalization(.none)
+                            .foregroundColor(Color.accentColor)
                             .bold()
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width: 60, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .placeholder(when: searchText.isEmpty){
+                                Text("Search restaurants, dishes, ...")
                                     .foregroundColor(Color.accentColor)
-                            )
-                    }
-                    Button{
+                                    .bold()
+                            }
                         
-                    }label:{
-                        Text("Service")
-                            .bold()
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width: 70, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.accentColor)
-                            )
+                    }.padding(.leading, 16)
+                        .padding(.top, 5)
+                    
+                    Rectangle()
+                        .frame(width: 360, height:1)
+                        .foregroundColor(Color.accentColor)
+                    
+                    //search bar buttons
+                    HStack{
+                        Button{
+                            
+                        }label:{
+                            Text("Food")
+                                .bold()
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 60, height: 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .foregroundColor(Color.accentColor)
+                                )
+                        }
+                        Button{
+                            
+                        }label:{
+                            Text("Service")
+                                .bold()
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 70, height: 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .foregroundColor(Color.accentColor)
+                                )
+                        }
+                        Button{
+                            
+                        }label:{
+                            Text("Nearby")
+                                .bold()
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 70, height: 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .foregroundColor(Color.accentColor)
+                                )
+                        }
+                        Button{
+                            
+                        }label:{
+                            Text("Trending")
+                                .bold()
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 90, height: 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .foregroundColor(Color.accentColor)
+                                )
+                        }
                     }
+                    
                     Button{
-                        
+                        showAddRestaurant = true
                     }label:{
-                        Text("Nearby")
+                        Image(systemName: "plus.app.fill")
                             .bold()
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width: 70, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.accentColor)
-                            )
+                            .font(.system(size:40))
                     }
-                    Button{
-                        
-                    }label:{
-                        Text("Trending")
-                            .bold()
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width: 90, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.accentColor)
-                            )
-                    }
-                }
-                
-                Button{
-                    AddRestaurantView()
-                }label:{
-                    Image(systemName: "plus.app.fill")
-                        .bold()
-                        .font(.system(size:40))
                 }
                 //display restaurants based on their categories
                 HStack{
@@ -163,9 +166,12 @@ struct HomeContentView: View {
                     }
                 }.padding()
                 
-            }.navigationBarBackButtonHidden(true)
+            .navigationBarBackButtonHidden(true)
                 .frame(width: 350)
                 .frame(maxWidth: .infinity)
+                .sheet(isPresented: $showAddRestaurant){
+                    AddRestaurantView()
+                }
         }
     }
 }
