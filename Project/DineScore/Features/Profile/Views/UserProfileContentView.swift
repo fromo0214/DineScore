@@ -18,14 +18,15 @@ struct UserProfileContentView: View {
         ZStack(alignment: .topLeading){
             Color.backgroundColor
                 .ignoresSafeArea()
-                
+            
+            VStack(alignment: .leading){
                 HStack{
                     VStack{
                         //--TODO: CHANGE TO BUTTON
                         Image(systemName: "person.crop.circle.fill")
                             .foregroundColor(Color.accentColor)
                             .font(Font.system(size:90))
-                    
+                        
                         
                         Text("Taster 🍴")
                             .bold()
@@ -42,8 +43,8 @@ struct UserProfileContentView: View {
                             .foregroundColor(Color.accentColor)
                             .bold()
                         
-                    }.padding(.bottom, 60)
-                        .padding(.leading)
+                    }//.padding(.bottom, 60)
+                    .padding(.leading)
                     
                     
                     VStack(){
@@ -73,10 +74,24 @@ struct UserProfileContentView: View {
                     }
                 }
                 
-            
-               
+                VStack(alignment: .leading){
+                    Text("Recent Activity")
+                        .padding()
+                        .font(.system(size: 20))
+                        .bold()
+                        .foregroundColor(.accentColor)
+                    
+                    Text("More Activity")
+                        .padding()
+                        .font(.system(size: 20))
+                        .bold()
+                        .foregroundColor(.accentColor)
+                    
+                }
             }
+            
         }
     }
+}
 
 

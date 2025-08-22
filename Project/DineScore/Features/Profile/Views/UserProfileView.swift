@@ -50,7 +50,6 @@ struct UserProfileView: View {
                     .frame(width:350, height:50)
                     .frame(maxWidth: .infinity, alignment: .top)
                     .background(Color.textColor)
-                Spacer()
                 
                 
                 
@@ -78,8 +77,13 @@ struct UserProfileView: View {
                 selectedTab = tab
             }) {
                 Text(title)
-                    .font(.system(size: 14))
-                    .foregroundColor(selectedTab == tab ? Color.backgroundColor : .gray)
+                    .font(.system(size: 18))
+                    .bold()
+                    .background(RoundedRectangle(cornerRadius: 5)
+                        .foregroundColor(selectedTab == tab ? Color.backgroundColor : Color.clear)
+                        .frame(width:70)
+                    )
+                    .foregroundColor(selectedTab == tab ? Color.textColor : .gray)
             }
         }
     

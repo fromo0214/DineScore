@@ -27,11 +27,11 @@ struct UserLikesView: View {
     
     var body: some View {
         NavigationStack{
-            ZStack{
+            ZStack(alignment: .topLeading){
                 Color.backgroundColor
                     .ignoresSafeArea()
                 
-                VStack(spacing:0){
+                VStack(alignment: .leading, spacing:0){
                     //picker tab
                     Picker("Nav Tab", selection: $selectedTab){
                         ForEach(NavTab.allCases){tab in

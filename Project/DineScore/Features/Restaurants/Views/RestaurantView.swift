@@ -11,3 +11,7 @@ struct RestaurantView: View{
         Text("RestaurantView")
     }
 }
+
+#Preview {
+    RestaurantView()
+}

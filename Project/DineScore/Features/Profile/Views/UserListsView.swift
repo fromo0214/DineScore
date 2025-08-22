@@ -5,7 +5,7 @@ struct UserListsView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
+            ZStack(){
                 Color.backgroundColor
                     .ignoresSafeArea()
                 
@@ -18,21 +18,7 @@ struct UserListsView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 
-                // Custom Back Button
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text("Profile")
-                        }
-                        .foregroundColor(Color.backgroundColor)
-                        .bold()
-                    }
-                }
                 
-                // Title
                 ToolbarItem(placement: .principal) {
                     Text("My Lists")
                         .foregroundColor(Color.backgroundColor)
@@ -43,6 +29,7 @@ struct UserListsView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
                         // Add list logic
+                        
                     }) {
                         Image(systemName: "plus")
                             .foregroundColor(Color.backgroundColor)

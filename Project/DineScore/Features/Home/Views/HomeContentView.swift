@@ -11,6 +11,7 @@ struct HomeContentView: View {
     @Binding var searchText: String
     var body: some View {
         
+    
         ScrollView{
             VStack{
                 //logo
@@ -108,6 +109,13 @@ struct HomeContentView: View {
                     }
                 }
                 
+                Button{
+                    AddRestaurantView()
+                }label:{
+                    Image(systemName: "plus.app.fill")
+                        .bold()
+                        .font(.system(size:40))
+                }
                 //display restaurants based on their categories
                 HStack{
                     Text("Featured Restaurants")
