@@ -34,7 +34,7 @@ final class AddRestaurantViewModel: ObservableObject{
     //used to enable/disable save button
     var isValid: Bool {
         //trims white spaces and ensures required fields are not empty
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && !address.trimmingCharacters(in: .whitespaces).isEmpty
+        !name.trimAndCollapseSpaces().isEmpty && !address.trimAndCollapseSpaces().isEmpty
     }
     
     
@@ -54,20 +54,28 @@ final class AddRestaurantViewModel: ObservableObject{
     
     func save(){
         //if the form is not valid (missing name/address) or we're already saving -> just stop
-        guard isValid, !isSaving else { return }
+        guard !isSaving else { return }
+        
+        let cleanName = name.trimAndCollapseSpaces()
+        let cleanAddress = address.trimAndCollapseSpaces()
+        
+        //validate after cleaning
+        guard !cleanName.isEmpty, !cleanAddress.isEmpty else {
+            return
+        }
         
         isSaving = true
         errorText = nil
         
         //unique ID so duplicate restaurants aren't created
-        let key = Restaurant.normalizedKey(name: name, address: address)
+        let key = Restaurant.makeNormalizedKey(name: cleanName, address: cleanAddress)
         
         //create a restaurant object with all the fields from the form
-        let base = Restaurant(id: nil, name: name.trimmingCharacters(in: .whitespaces), address: address.trimmingCharacters(in: .whitespaces), cuisine: cuisine, priceLevel: priceLevel, photoURL: nil, avgFoodScore: 0, avgFoodServiceScore: 0, reviewCount: 0, ownerId: "", status: "active", normalizedKey: key, latitude: 0, longitude: 0, createdAt: nil, updatedAt: nil)
+        let base = Restaurant(id: nil, name: cleanName, address: cleanAddress, cuisine: cuisine, priceLevel: priceLevel, photoURL: nil, avgFoodScore: 0, avgFoodServiceScore: 0, reviewCount: 0, ownerId: "", status: "active", normalizedKey: key, latitude: 0, longitude: 0, createdAt: nil, updatedAt: nil)
+        
         
         //Ask firestore to store this restaurant in the repository
         //The repo will: check if a restaurant with this normalized key already exists
-        
         repo.createRestaurantIfNeeded(base){ [weak self] //[weak self] used to not hold memory, creates a memory leak (retain cycle)
             result in
             guard let self = self else { return } //safety: avoid crashes if view goes away
