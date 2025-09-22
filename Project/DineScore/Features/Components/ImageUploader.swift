@@ -23,7 +23,6 @@ final class ImageUploader {
         // sanity printouts to catch common config issues
         let uid = Auth.auth().currentUser?.uid ?? "nil"
         let bucket = FirebaseApp.app()?.options.storageBucket ?? "nil"
-        print("[Uploader] user uid=\(uid), bucket=\(bucket)")
 
         guard let data = image.jpegData(compressionQuality: 0.9) else {
             throw ImageUploaderError.jpegEncoding
