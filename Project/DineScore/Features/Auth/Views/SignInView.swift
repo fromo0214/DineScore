@@ -12,13 +12,16 @@ import GoogleSignInSwift
 import AuthenticationServices
 
 struct SignInView: View {
-    @State private var email = ""
-    @State private var password = ""
+    //ViewModel that talks to AuthService
+    @StateObject private var vm = SignInViewModel()
+    
+    //App flags driving navigation
+    @AppStorage("userIsLoggedIn") private var userIsLoggedIn = false
+    @AppStorage("hasSeenSlideshow") private var hasSeenSlideshow: Bool = false
+    
+    // View-only state
     @State private var showRegister = false
     @State private var showForgotPassword = false
-    @AppStorage("userIsLoggedIn") private var userIsLoggedIn = false
-    @State private var errorMessage = ""
-    @AppStorage("hasSeenSlideshow") private var hasSeenSlideshow: Bool = false
     
     //keyboard focus fields destinations
     enum Field:Hashable {
@@ -90,7 +93,7 @@ struct SignInView: View {
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(Color.accentColor)
                     
-                    TextField("Email", text: $email)
+                    TextField("Email", text: $vm.email)
                         .bold()
                         .submitLabel(.next)
                         .foregroundColor(Color.accentColor)
@@ -98,7 +101,7 @@ struct SignInView: View {
                         .autocapitalization(.none)
                         .focused($focusedField, equals: .email)
                         .disableAutocorrection(true)
-                        .placeholder(when: email.isEmpty){
+                        .placeholder(when: vm.email.isEmpty){
                             Text("Email")
                                 .foregroundColor(Color.accentColor)
                                 .bold()
@@ -111,7 +114,7 @@ struct SignInView: View {
                         .frame(width: 350, height: 1)
                         .foregroundColor(Color.accentColor)
                     
-                    SecureField("Password", text:$password)
+                    SecureField("Password", text:$vm.password)
                         .foregroundColor(Color.accentColor)
                         .textFieldStyle(.plain)
                         .submitLabel(.done)
@@ -119,7 +122,7 @@ struct SignInView: View {
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                         .bold()
-                        .placeholder(when: password.isEmpty){
+                        .placeholder(when: vm.password.isEmpty){
                             Text("Password")
                                 .foregroundColor(Color.accentColor)
                                 .bold()
@@ -133,23 +136,38 @@ struct SignInView: View {
                         .frame(width: 350, height: 1)
                         .foregroundColor(Color.accentColor)
                     
+                    //Sign in button
                     Button{
-                        //sign in function
-                        login()
+                        focusedField = nil
+                        Task{
+                            await vm.signIn()
+                            //If authService succeeded, Firebase listener will flip userIsLoggedIn.
+                            //Also verify email before proceeding:
+                            if let user = Auth.auth().currentUser, user.isEmailVerified{
+                                UserDefaults.standard.set(true, forKey: "userIsLoggedIn")
+                            } else if Auth.auth().currentUser != nil {
+                                vm.errorMessage = "Please verify your email."
+                                try? Auth.auth().signOut()
+                            }
+                        }
                     }label:{
-                        Text("Sign In")	
-                            .bold()
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width: 200, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .foregroundColor(Color.accentColor)
-                            )
+                        HStack{
+                            if vm.isLoading { ProgressView() }
+                            Text("Sign In")
+                        }
+                                .bold()
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 200, height: 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .foregroundColor(Color.accentColor)
+                                )
+                        
                     }
                     
                     //displays error message
-                    if !errorMessage.isEmpty{
-                        Text(errorMessage)
+                    if !vm.errorMessage.isEmpty{
+                        Text(vm.errorMessage)
                             .foregroundColor(.red)
                     }
                     
@@ -248,33 +266,6 @@ struct SignInView: View {
     }
     
     
-    func login(){
-        Auth.auth().signIn(withEmail: email, password: password){ result, error in
-            if let error = error{
-                errorMessage = "Email or password is incorrect."
-                print("Login error: \(error.localizedDescription)")
-                return
-            }
-            
-            //if user does not exist return
-            guard let user = Auth.auth().currentUser else { return }
-            
-            if user.isEmailVerified {
-                print("User email verified")
-                
-                // ✅ Set login flag so ContentView will transition
-                UserDefaults.standard.set(true, forKey: "userIsLoggedIn")
-                print("✅ userIsLoggedIn set to true")
-            }else{
-                errorMessage = "Please verify your email."
-                print("Email is not verified")
-                //Sign user out if needed
-                try? Auth.auth().signOut()
-            }
-            
-        }
-    }
-    
     func handleGoogleSignIn(){
         
     }
@@ -323,10 +314,10 @@ extension View {
         }
 }
 
-#Preview {
-    SignInView()
-        .onAppear {
-            UserDefaults.standard.set(false, forKey: "userIsLoggedIn")
-            UserDefaults.standard.set(false, forKey: "hasSeenSlideshow")
-        }
-}
+//#Preview {
+//    SignInView()
+//        .onAppear {
+//            UserDefaults.standard.set(false, forKey: "userIsLoggedIn")
+//            UserDefaults.standard.set(false, forKey: "hasSeenSlideshow")
+//        }
+//}

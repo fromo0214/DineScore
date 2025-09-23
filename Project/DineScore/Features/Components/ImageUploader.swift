@@ -21,8 +21,7 @@ final class ImageUploader {
     @MainActor
     func uploadRestaurantCover(_ image: UIImage, restaurantId: String) async throws -> String {
         // sanity printouts to catch common config issues
-        let uid = Auth.auth().currentUser?.uid ?? "nil"
-        let bucket = FirebaseApp.app()?.options.storageBucket ?? "nil"
+        //let uid = Auth.auth().currentUser?.uid ?? "nil"
 
         guard let data = image.jpegData(compressionQuality: 0.9) else {
             throw ImageUploaderError.jpegEncoding

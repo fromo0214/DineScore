@@ -10,14 +10,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct RegisterView: View {
-    @State private var firstName: String = ""
-    @State private var lastName: String = ""
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var confirmPassword: String = ""
-    @State private var zipCode: String = ""
-    @State private var errorMessage: String = ""
-    @State private var emailMessage: String = ""
+    @StateObject private var vm = RegisterViewModel()
     
     //keyboard focus fields destinations
     enum Field:Hashable{
@@ -48,7 +41,7 @@ struct RegisterView: View {
                     .foregroundColor(Color.accentColor)
                     .font(.largeTitle)
                 
-                TextField("First Name", text: $firstName)
+                TextField("First Name", text: $vm.firstName)
                     .bold()
                     .submitLabel(.next)
                     .focused($focusedField, equals:.firstName)
@@ -56,7 +49,7 @@ struct RegisterView: View {
                     .textFieldStyle(.plain)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
-                    .placeholder(when: firstName.isEmpty){
+                    .placeholder(when: vm.firstName.isEmpty){
                         Text("First Name")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -69,7 +62,7 @@ struct RegisterView: View {
                     .frame(width: 350, height: 1)
                     .foregroundColor(Color.accentColor)
                 
-                TextField("Last Name", text: $lastName)
+                TextField("Last Name", text: $vm.lastName)
                     .bold()
                     .foregroundColor(Color.accentColor)
                     .submitLabel(.next)
@@ -77,7 +70,7 @@ struct RegisterView: View {
                     .focused($focusedField, equals: .lastName)
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
-                    .placeholder(when: lastName.isEmpty){
+                    .placeholder(when: vm.lastName.isEmpty){
                         Text("Last Name")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -90,7 +83,7 @@ struct RegisterView: View {
                     .frame(width: 350, height: 1)
                     .foregroundColor(Color.accentColor)
                 
-                TextField("Email", text: $email)
+                TextField("Email", text: $vm.email)
                     .bold()
                     .foregroundColor(Color.accentColor)
                     .submitLabel(.next)
@@ -98,7 +91,7 @@ struct RegisterView: View {
                     .focused($focusedField, equals: .email)
                     .autocapitalization(.none)
                     .textFieldStyle(.plain)
-                    .placeholder(when: email.isEmpty){
+                    .placeholder(when: vm.email.isEmpty){
                         Text("Email")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -111,7 +104,7 @@ struct RegisterView: View {
                     .foregroundColor(Color.accentColor)
                     
                 
-                SecureField("Password", text:$password)
+                SecureField("Password", text:$vm.password)
                     .foregroundColor(Color.accentColor)
                     .textFieldStyle(.plain)
                     .submitLabel(.next)
@@ -119,7 +112,7 @@ struct RegisterView: View {
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .bold()
-                    .placeholder(when: password.isEmpty){
+                    .placeholder(when: vm.password.isEmpty){
                         Text("Password")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -132,7 +125,7 @@ struct RegisterView: View {
                     .frame(width: 350, height: 1)
                     .foregroundColor(Color.accentColor)
                 
-                SecureField("Confirm Password", text:$confirmPassword)
+                SecureField("Confirm Password", text:$vm.confirmPassword)
                     .foregroundColor(Color.accentColor)
                     .textFieldStyle(.plain)
                     .submitLabel(.next)
@@ -140,7 +133,7 @@ struct RegisterView: View {
                     .disableAutocorrection(true)
                     .autocapitalization(.none)
                     .bold()
-                    .placeholder(when: confirmPassword.isEmpty){
+                    .placeholder(when: vm.confirmPassword.isEmpty){
                         Text("Confirm Password")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -153,23 +146,23 @@ struct RegisterView: View {
                     .frame(width: 350, height: 1)
                     .foregroundColor(Color.accentColor)
                 
-                TextField("Zip Code", text: $zipCode)
+                TextField("Zip Code", text: $vm.zipCode)
                     .bold()
                     .foregroundColor(Color.accentColor)
                     .submitLabel(.done)
                     .focused($focusedField, equals: .zipCode)
                     .disableAutocorrection(true)
                     .textFieldStyle(.plain)
-                    .onChange(of: zipCode){ oldValue, newValue in
+                    .onChange(of: vm.zipCode){ oldValue, newValue in
                         //Allow only digits (limit to 5 digits
                         let filtered = newValue.filter{$0.isNumber}
                         if filtered.count > 5 {
-                            zipCode = String(filtered.prefix(5))
+                            vm.zipCode = String(filtered.prefix(5))
                         }else{
-                            zipCode = filtered
+                            vm.zipCode = filtered
                         }
                     }
-                    .placeholder(when: zipCode.isEmpty){
+                    .placeholder(when: vm.zipCode.isEmpty){
                         Text("Zip Code")
                             .foregroundColor(Color.accentColor)
                             .bold()
@@ -199,15 +192,15 @@ struct RegisterView: View {
                         )
                 }
                
-                if !errorMessage.isEmpty{
-                    Text(errorMessage)
+                if !vm.errorMessage.isEmpty{
+                    Text(vm.errorMessage)
                         .foregroundColor(.red)
                         .bold()
                         .multilineTextAlignment(.center)
                 }
                 
-                if !emailMessage.isEmpty{
-                    Text(emailMessage)
+                if !vm.emailMessage.isEmpty{
+                    Text(vm.emailMessage)
                         .foregroundColor(.blue)
                         .bold()
                         .multilineTextAlignment(.center)
