@@ -8,6 +8,15 @@
 import SwiftUI
 
 struct UserSocialsView: View {
+    let currentUser: AppUser
+    @ObservedObject var vm = UserProfileViewModel()
+    
+    init(currentUser: AppUser, vm: UserProfileViewModel) {
+           self.currentUser = currentUser
+           self.vm = vm
+        _followers = State(initialValue: currentUser.followers)
+        _following = State(initialValue: currentUser.following)
+       }
     
     //dismisses the current view, used for back button
     @Environment(\.dismiss) var dismiss
@@ -22,8 +31,8 @@ struct UserSocialsView: View {
     
     // hardcode — replace with Firebase user data
     //show pfp, username
-       @State private var followers = ["Fernando R.", "Eric R.", "Diego R."]
-       @State private var following = ["Rosalba C.", "Luis R.", "Rosa R."]
+    @State private var followers: [AppUser] = []
+    @State private var following: [AppUser] = []
 
     
     var body: some View {
@@ -56,7 +65,7 @@ struct UserSocialsView: View {
                                             .foregroundColor(Color.accentColor)
                                 
                                         //display username
-                                        Text(user)
+                                        Text(user.firstName)
                                             .foregroundColor(Color.accentColor)
                                     }
                                 }

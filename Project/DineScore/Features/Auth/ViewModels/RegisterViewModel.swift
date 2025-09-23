@@ -4,7 +4,7 @@
 //
 //  Created by Fernando Romo on 9/22/25.
 //
-// Calls AuthService to actually create accounts
+//  Calls AuthService to actually create accounts
 
 import Foundation
 
@@ -28,6 +28,25 @@ final class RegisterViewModel: ObservableObject{
             errorMessage = "Please enter your first and last name."
             return
         }
+        
+        guard password == confirmPassword else{
+            errorMessage = "Passwords do not match."
+            return
+        }
        
+        guard zipCode.count == 5, zipCode.allSatisfy(\.isNumber) else{
+            errorMessage = "Please enter a valid zip code."
+            return
+        }
+        
+        errorMessage = ""
+        emailMessage = ""
+        
+        do {
+            try await authService.signUp(firstName: firstName, lastName: lastName, email: email, password: password, zipCode: zipCode)
+            emailMessage = "Verification email sent! Check your inbox."
+        } catch{
+            errorMessage = error.localizedDescription
+        }
     }
 }

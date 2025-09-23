@@ -6,15 +6,10 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct UserProfileView: View {
-    
-    //profile details
-    @State var firstName: String = "Fernando"
-    @State var lastName: String = "Romo"
-    @State var email: String = "fromo301@yahoo.com"
-    @State var zipCode: String = "90247"
-    @State var dob : Date = Date()
+    @StateObject private var vm = UserProfileViewModel()
     
     @State var selectedTab: ProfileTab = .profile
     
@@ -56,19 +51,27 @@ struct UserProfileView: View {
                 Group{
                     switch selectedTab {
                     case .profile:
-                        UserProfileContentView()
+                        if let user = vm.currentUser{
+                            UserProfileContentView(currentUser: user, vm: vm)
+                        }else if vm.isLoading{
+                            ProgressView("Loading Profile...")
+                        }
+
                     case .lists:
                         UserListsView()
                     case .reviews:
                         UserReviewView()
                     case .socials:
-                        UserSocialsView()
+                        if let user = vm.currentUser{
+                            UserSocialsView(currentUser: user, vm: vm)
+                        }
                     case .likes:
                         UserLikesView()
                     }
                 }
                 
             }
+            .task{await vm.getAppUser()}
         }
     }
 

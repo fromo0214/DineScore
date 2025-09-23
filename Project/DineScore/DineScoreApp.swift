@@ -8,11 +8,13 @@
 import SwiftUI
 import Firebase
 import UIKit
+import FirebaseAuth
 
 
 
 @main
 struct DineScoreApp: App {
+    @StateObject private var session = UserSession()
     
     init(){
         FirebaseApp.configure()
@@ -23,6 +25,12 @@ struct DineScoreApp: App {
     var body: some Scene {
         WindowGroup {
             SplashView()
+                .environmentObject(session)
+                .onAppear{
+                    if Auth.auth().currentUser != nil{
+                        session.start()
+                    }
+                }
         }
     }
 }

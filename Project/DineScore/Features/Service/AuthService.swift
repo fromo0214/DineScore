@@ -41,4 +41,6 @@ final class AuthService: ObservableObject{
             try await repo.updateLastLogin(uid: uid)
         }
     }
+    
+   
 }

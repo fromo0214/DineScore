@@ -7,12 +7,25 @@
 import SwiftUI
 
 struct UserProfileContentView: View {
+    let currentUser: AppUser
+    init(currentUser: AppUser, vm: UserProfileViewModel) {
+           self.currentUser = currentUser
+           self.vm = vm
+           _firstName = State(initialValue: currentUser.firstName)
+           _lastName  = State(initialValue: currentUser.lastName)
+           _email     = State(initialValue: currentUser.email)
+           _zipCode   = State(initialValue: currentUser.zipCode ?? "")
+       }
     //profile details
-    @State var firstName: String = "Fernando"
-    @State var lastName: String = "Romo"
-    @State var email: String = "fromo301@yahoo.com"
-    @State var zipCode: String = "90247"
+    @State var firstName: String
+    @State var lastName: String
+    @State var email: String
+    @State var zipCode: String
     @State var dob : Date = Date()
+    
+    @ObservedObject var vm = UserProfileViewModel()
+    
+   
     
     var body: some View {
         ZStack(alignment: .topLeading){
@@ -35,11 +48,11 @@ struct UserProfileContentView: View {
                             .frame(width:100, height: 5)
                             .foregroundColor(Color.accentColor)
                             .padding(.bottom, 5)
-                        Text("Followers: 10")
+                        Text("Followers: \(currentUser.followers.count)")
                             .foregroundColor(Color.accentColor)
                             .bold()
                             .padding(.bottom, 5)
-                        Text("Following: 10")
+                        Text("Following: \(currentUser.following.count)")
                             .foregroundColor(Color.accentColor)
                             .bold()
                         
@@ -71,6 +84,12 @@ struct UserProfileContentView: View {
                             .scrollContentBackground(.hidden)
                             .background(Color.backgroundColor)
                             .cornerRadius(10)
+                        
+                        Button("Save"){
+                            Task{
+                                await vm.updateCurrentUser(firstName: firstName, lastName: lastName, zipCode: zipCode)
+                            }
+                        }
                     }
                 }
                 

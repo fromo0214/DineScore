@@ -23,7 +23,6 @@ struct RegisterView: View {
     }
     
     @FocusState private var focusedField: Field?
-        
     
     var body: some View {
         ZStack{
@@ -178,8 +177,11 @@ struct RegisterView: View {
                     .foregroundColor(Color.accentColor)
                 
                 Button{
-                    //sign in
-                    register()
+                    //sign up
+                    focusedField = nil
+                    Task{
+                        await vm.register()
+                    }
                     
                 }label:{
                     Text("Sign Up")
@@ -210,42 +212,9 @@ struct RegisterView: View {
         }
     }
     
-    func register(){
-        
-        guard password == confirmPassword else {
-            errorMessage = "Passwords do not match."
-            return
-        }
-        
-        guard zipCode.count == 5 else {
-            errorMessage = "Please enter a valid 5-digit zip code."
-            return
-        }
-        
-        
-        Auth.auth().createUser(withEmail: email, password: password){ result, error in
-            if let error = error{
-                errorMessage = error.localizedDescription
-            }
-            
-            //Sends email verifcation
-            result?.user.sendEmailVerification(){ error in
-                if let error = error{
-                    print("Verification Email error: \(error.localizedDescription)")
-                }else{
-                    emailMessage = "Email verification sent!"
-                    print("Verification email sent!")
-                }
-                
-                //Marks slideshow as not seen
-                UserDefaults.standard.set(false, forKey: "hasSeenSlideshow")
-                print("New user created, slide show not seen.")
-                
-            }
-        }
-    }
+   
 }
 
-#Preview {
-    RegisterView()
-}
+//#Preview {
+//    RegisterView()
+//}
