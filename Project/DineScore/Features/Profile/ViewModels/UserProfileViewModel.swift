@@ -13,28 +13,52 @@ final class UserProfileViewModel: ObservableObject{
     @Published var isLoading = false
     @Published var errorMessage = ""
     @Published var currentUser: AppUser? = nil
+    @Published var followerUsers: [AppUser] = []
+    @Published var followingUsers: [AppUser] = []
+    
     private let db = Firestore.firestore()
     private let repo = AppUserRepository()
     
-    func updateCurrentUser(firstName: String, lastName: String, zipCode: String) async{
-        guard var user = currentUser else { return }
-//        guard let uid = user.id else { return }
-        
+    func loadSocials(for user: AppUser) async{
+        followerUsers = await fetchUsers(ids: user.followers)
+        followingUsers = await fetchUsers(ids: user.following)
+    }
+    
+    //retrieves users followers/following ids at the same time
+    private func fetchUsers(ids: [String]) async -> [AppUser]{
+        //run child tasks on a background executor
+        return await withTaskGroup(of: AppUser?.self) { group in
+            //add one child task per user id
+            for id in ids {
+                //this runs for every task per user id, if it fails then return nil and skips it
+                group.addTask{ do{
+                    return try await self.repo.get(uid: id)
+                }catch{
+                    print("Failed to fetch \(id): \(error.localizedDescription)")
+                    return nil
+                }}
+            }
+            //Collect results as child finishes
+            var results: [AppUser] = []
+            for await user in group{
+                if let user { results.append(user) }
+            }
+            return results
+        }
+    }
+    
+    func updateCurrentUser(firstName: String, lastName: String, zipCode: String) async {
+        guard var user = currentUser, let _ = user.id else { return }
         user.firstName = firstName
         user.lastName = lastName
         user.zipCode = zipCode
-        //user.dob = dob
-        
         do{
             try await repo.upsert(user: user)
-            self.currentUser = user
+            currentUser = user
         }catch{
             errorMessage = "Failed to update user: \(error.localizedDescription)"
         }
-        
-        
     }
-    
     
     func getAppUser() async {
         guard let uid = Auth.auth().currentUser?.uid else {

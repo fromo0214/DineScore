@@ -13,7 +13,7 @@ struct UserSocialsView: View {
     
     init(currentUser: AppUser, vm: UserProfileViewModel) {
            self.currentUser = currentUser
-           self.vm = vm
+        _vm = ObservedObject(wrappedValue: vm)
         _followers = State(initialValue: currentUser.followers)
         _following = State(initialValue: currentUser.following)
        }
@@ -31,8 +31,8 @@ struct UserSocialsView: View {
     
     // hardcode — replace with Firebase user data
     //show pfp, username
-    @State private var followers: [AppUser] = []
-    @State private var following: [AppUser] = []
+    @State private var followers: [String] = []
+    @State private var following: [String] = []
 
     
     var body: some View {
@@ -52,7 +52,7 @@ struct UserSocialsView: View {
                         .padding(.top, 5)
                     
                     List{
-                        ForEach(selectedTab == .followers ? followers : following, id: \.self) { user in
+                        ForEach(selectedTab == .followers ? followers : following, id: \.self) { userId in
                             HStack{
                                 
                                 Button(action: {
@@ -65,7 +65,7 @@ struct UserSocialsView: View {
                                             .foregroundColor(Color.accentColor)
                                 
                                         //display username
-                                        Text(user.firstName)
+                                        Text(userId)
                                             .foregroundColor(Color.accentColor)
                                     }
                                 }
@@ -74,9 +74,9 @@ struct UserSocialsView: View {
                                 //remove/unfollow logic button
                                 Button(action: {
                                     if selectedTab == .followers {
-                                        followers.removeAll { $0 == user }
+                                        followers.removeAll { $0 == userId }
                                     }else{
-                                        following.removeAll { $0 == user }
+                                        following.removeAll { $0 == userId }
                                     }
                                 }){
                                     Text(selectedTab == .followers ? "Remove" : "Unfollow")

@@ -7,15 +7,9 @@
 import SwiftUI
 
 struct UserProfileContentView: View {
+    
     let currentUser: AppUser
-    init(currentUser: AppUser, vm: UserProfileViewModel) {
-           self.currentUser = currentUser
-           self.vm = vm
-           _firstName = State(initialValue: currentUser.firstName)
-           _lastName  = State(initialValue: currentUser.lastName)
-           _email     = State(initialValue: currentUser.email)
-           _zipCode   = State(initialValue: currentUser.zipCode ?? "")
-       }
+    @ObservedObject var vm = UserProfileViewModel()
     //profile details
     @State var firstName: String
     @State var lastName: String
@@ -23,7 +17,16 @@ struct UserProfileContentView: View {
     @State var zipCode: String
     @State var dob : Date = Date()
     
-    @ObservedObject var vm = UserProfileViewModel()
+    init(currentUser: AppUser, vm: UserProfileViewModel) {
+           self.currentUser = currentUser
+           _vm = ObservedObject(wrappedValue: vm)
+           _firstName = State(initialValue: currentUser.firstName)
+           _lastName  = State(initialValue: currentUser.lastName)
+           _email     = State(initialValue: currentUser.email)
+           _zipCode   = State(initialValue: currentUser.zipCode ?? "")
+       }
+   
+    
     
    
     

@@ -18,8 +18,8 @@ struct AppUser: Identifiable, Codable {
     var level: Int
     var zipCode: String?
     var favoriteRestaurants: [String] // Restaurant IDs
-    var followers: [AppUser]
-    var following: [AppUser]
+    var followers: [String] //user ids
+    var following: [String] //user ids
     var joinedDate: Date
     var lastLoginAt: Date?
     
