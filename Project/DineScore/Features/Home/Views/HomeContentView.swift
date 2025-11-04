@@ -8,14 +8,19 @@
 import SwiftUI
 
 struct HomeContentView: View {
-    @Binding var searchText: String
     @State private var showAddRestaurant = false
+
+    @StateObject private var vm = SearchViewModel()
+    @State private var selectedUserId: String?
     
+    //Transition to a search view
+    @State private var isSearching = false
+    @State private var searchText: String = ""
+
     var body: some View {
     
     
         ScrollView{
-            
                 VStack{
                     //logo
                     HStack{
@@ -37,19 +42,37 @@ struct HomeContentView: View {
                     HStack{
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(Color.accentColor)
-                        TextField("Search restaurants, dishes, ...", text: $searchText)
+                        TextField("Search restaurants, dishes, ...", text: $vm.searchText)
                             .disableAutocorrection(true)
                             .autocapitalization(.none)
                             .foregroundColor(Color.accentColor)
                             .bold()
-                            .placeholder(when: searchText.isEmpty){
+                            .placeholder(when: vm.searchText.isEmpty){
                                 Text("Search restaurants, dishes, ...")
                                     .foregroundColor(Color.accentColor)
                                     .bold()
                             }
                         
+                        
                     }.padding(.leading, 16)
                         .padding(.top, 5)
+                    
+                    if vm.isLoading{
+                        ProgressView().padding(.top, 16)
+                    } else if !vm.errorMessage.isEmpty{
+                        Text(vm.errorMessage).foregroundColor(.red).padding(.top, 16)
+                    } else if vm.results.isEmpty, !vm.searchText.isEmpty{
+                        Text("Nothing found!").foregroundColor(.accentColor).padding(.top, 16)
+                    }else{
+                        LazyVStack(alignment: .leading, spacing: 0){
+                            ForEach(vm.results){ user in
+                                Button{ selectedUserId = user.id } label:
+                                {UserRow(user: user)}
+                                Divider()//.padding(.leading, 72)
+                            }.padding()
+                        }//.padding()
+                    }
+                      
                     
                     Rectangle()
                         .frame(width: 360, height:1)
@@ -171,6 +194,9 @@ struct HomeContentView: View {
                 .frame(maxWidth: .infinity)
                 .sheet(isPresented: $showAddRestaurant){
                     AddRestaurantView()
+                }
+                .navigationDestination(item:$selectedUserId) { userId in
+                    PublicProfileView(userId: userId)
                 }
         }
     }

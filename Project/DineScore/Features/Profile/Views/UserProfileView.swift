@@ -29,50 +29,52 @@ struct UserProfileView: View {
         ZStack{
             Color.backgroundColor
                 .ignoresSafeArea()
-            
-            VStack(spacing:0){
-                HStack{
-                    navButton(title:"Profile", tab: .profile)
-                    Spacer()
-                    navButton(title:"Lists", tab:.lists)
-                    Spacer()
-                    navButton(title:"Reviews", tab:.reviews)
-                    Spacer()
-                    navButton(title:"Socials", tab:.socials)
-                    Spacer()
-                    navButton(title:"Likes", tab:.likes)
-                }.shadow(radius: 5)
-                    .frame(width:350, height:50)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .background(Color.textColor)
-                
-                
-                
-                Group{
-                    switch selectedTab {
-                    case .profile:
-                        if let user = vm.currentUser{
-                            UserProfileContentView(currentUser: user, vm: vm)
-                        }else if vm.isLoading{
-                            ProgressView("Loading Profile...")
+                VStack(){
+                    HStack{
+                        navButton(title:"Profile", tab: .profile)
+                        Spacer()
+                        navButton(title:"Lists", tab:.lists)
+                        Spacer()
+                        navButton(title:"Reviews", tab:.reviews)
+                        Spacer()
+                        navButton(title:"Socials", tab:.socials)
+                        Spacer()
+                        navButton(title:"Likes", tab:.likes)
+                    }.shadow(radius: 5)
+                        .frame(width:350, height:50)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .background(Color.textColor)
+                    
+                    
+                    Group{
+                        switch selectedTab {
+                        case .profile:
+                            if let user = vm.currentUser{
+                                UserProfileContentView(currentUser: user, vm: vm)
+                            }else if vm.isLoading{
+                                ProgressView("Loading Profile...")
+                            }
+                            Spacer()
+                            
+                            
+                        case .lists:
+                            UserListsView()
+                        case .reviews:
+                            UserReviewView()
+                        case .socials:
+                            if let user = vm.currentUser{
+                                UserSocialsView(currentUser: user, vm: vm)
+                            }
+                        case .likes:
+                            UserLikesView()
                         }
-
-                    case .lists:
-                        UserListsView()
-                    case .reviews:
-                        UserReviewView()
-                    case .socials:
-                        if let user = vm.currentUser{
-                            UserSocialsView(currentUser: user, vm: vm)
-                        }
-                    case .likes:
-                        UserLikesView()
                     }
+                    
                 }
-                
+                .task{await vm.getAppUser()}
             }
-            .task{await vm.getAppUser()}
-        }
+            
+        
     }
 
     func navButton(title: String, tab: ProfileTab) -> some View {

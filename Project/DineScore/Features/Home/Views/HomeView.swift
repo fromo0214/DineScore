@@ -27,7 +27,7 @@ struct HomeView: View {
             Group{
                 switch selectedTab {
                 case .home:
-                    HomeContentView(searchText: $searchText)
+                    HomeContentView()
                 case .profile:
                     UserProfileView()
                 case .activity:
@@ -60,7 +60,6 @@ struct HomeView: View {
             }.ignoresSafeArea(edges: .bottom)
            
         
-
     }
     
     //used to show current active tab
