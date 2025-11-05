@@ -29,7 +29,7 @@ struct UserProfileView: View {
         ZStack{
             Color.backgroundColor
                 .ignoresSafeArea()
-                VStack(){
+            VStack(spacing: 0){
                     HStack{
                         navButton(title:"Profile", tab: .profile)
                         Spacer()

@@ -4,37 +4,31 @@ struct UserListsView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            ZStack(){
-                Color.backgroundColor
-                    .ignoresSafeArea()
-                
-                Text("User Lists View")
-            }
-            .navigationBarBackButtonHidden(true)
-            .navigationTitle("") // Empty title to avoid spacing issues
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.textColor, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                
-                
-                ToolbarItem(placement: .principal) {
+        ZStack(){
+            Color.backgroundColor
+                .ignoresSafeArea()
+            VStack(alignment: .center, spacing: 0){
+                // This header will appear below any parent navigation bar
+                HStack {
                     Text("My Lists")
                         .foregroundColor(Color.backgroundColor)
                         .bold()
-                }
-                
-                // Add Button
-                ToolbarItem(placement: .topBarTrailing) {
+                    Spacer()
                     Button(action: {
                         // Add list logic
-                        
                     }) {
                         Image(systemName: "plus")
                             .foregroundColor(Color.backgroundColor)
+                            .padding()
+                            .bold()
                     }
                 }
+                .padding(.horizontal)
+                .frame(maxWidth: .infinity, minHeight: 44) // typical bar height
+                .background(Color.textColor)
+
+                Spacer()
+                // Your lists/content go here
             }
         }
     }

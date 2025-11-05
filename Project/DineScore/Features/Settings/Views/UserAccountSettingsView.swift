@@ -66,7 +66,7 @@ struct UserAccountSettingsView: View {
                                 .foregroundColor(Color.backgroundColor)
                                 .bold()
                             Text("Settings")
-                                .foregroundColor(Color.backgroundColor)
+                                .foregroundColor(Color.accentColor)
                                 .bold()
                         }
                     }
