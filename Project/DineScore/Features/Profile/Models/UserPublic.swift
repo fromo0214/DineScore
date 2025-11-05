@@ -22,7 +22,7 @@ struct UserPublic: Identifiable, Codable, Equatable {
     
     var displayNameShort: String{
         let lastInitial = lastName.first.map{ String($0).uppercased()}  ?? ""
-        return "\(firstName.capitalized) \(lastInitial))."
+        return "\(firstName.capitalized) \(lastInitial)."
     }
     
     init(id: String, username: String, firstName: String, lastName: String, profilePicture: String? = nil, bio: String? = nil, username_normalized: String, firstName_normalized: String, lastName_normalized: String) {

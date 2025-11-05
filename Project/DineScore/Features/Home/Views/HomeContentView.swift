@@ -1,45 +1,37 @@
-//
-//  HomeContentView.swift
-//  DineScore
-//
-//  Created by Fernando Romo on 7/20/25.
-//
-
 import SwiftUI
 
 struct HomeContentView: View {
     @State private var showAddRestaurant = false
-
     @StateObject private var vm = SearchViewModel()
     @State private var selectedUserId: String?
-    
-    //Transition to a search view
     @State private var isSearching = false
-    @State private var searchText: String = ""
-
+    
     var body: some View {
-    
-    
-        ScrollView{
-                VStack{
-                    //logo
-                    HStack{
-                        Image("dineScoreSymbol")
-                            .resizable()
-                            .frame(width:50, height:50)
-                            .padding(.leading, 60)
-                            .foregroundColor(Color.accentColor)
-                        Text("DineScore")
-                            .bold()
-                            .foregroundColor(Color.accentColor)
-                            .font(.title)
-                        Spacer()
-                    }
-                    .padding(.top, 1)
-                    .padding(.leading, 16)
-                    
-                    //search bar
-                    HStack{
+        ScrollView {
+            VStack {
+                // Logo Header
+                HStack {
+                    Image("dineScoreSymbol")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .padding(.leading, 60)
+                        .foregroundColor(Color.accentColor)
+                    Text("DineScore")
+                        .bold()
+                        .foregroundColor(Color.accentColor)
+                        .font(.title)
+                    Spacer()
+                }
+                .padding(.top, 1)
+                .padding(.leading, 16)
+                
+                if isSearching {
+                    // Present search view instead of home content
+                    SearchView(vm: vm, isSearching: $isSearching, selectedUserId: $selectedUserId)
+                        .frame(maxWidth: CGFloat.infinity)
+                } else {
+                    // Home Content
+                    HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(Color.accentColor)
                         TextField("Search restaurants, dishes, ...", text: $vm.searchText)
@@ -52,154 +44,102 @@ struct HomeContentView: View {
                                     .foregroundColor(Color.accentColor)
                                     .bold()
                             }
-                        
-                        
-                    }.padding(.leading, 16)
-                        .padding(.top, 5)
-                    
-                    if vm.isLoading{
-                        ProgressView().padding(.top, 16)
-                    } else if !vm.errorMessage.isEmpty{
-                        Text(vm.errorMessage).foregroundColor(.red).padding(.top, 16)
-                    } else if vm.results.isEmpty, !vm.searchText.isEmpty{
-                        Text("Nothing found!").foregroundColor(.accentColor).padding(.top, 16)
-                    }else{
-                        LazyVStack(alignment: .leading, spacing: 0){
-                            ForEach(vm.results){ user in
-                                Button{ selectedUserId = user.id } label:
-                                {UserRow(user: user)}
-                                Divider()//.padding(.leading, 72)
-                            }.padding()
-                        }//.padding()
+                            .disabled(true) // Disable editing on the home screen
                     }
-                      
+                    // Make the whole bar tappable to enter SearchView
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.clear)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                isSearching = true
+                            }
+                    )
+                    .padding(.leading, 16)
+                    .padding(.top, 5)
                     
                     Rectangle()
-                        .frame(width: 360, height:1)
+                        .frame(width: 360, height: 1)
                         .foregroundColor(Color.accentColor)
                     
-                    //search bar buttons
-                    HStack{
-                        Button{
-                            
-                        }label:{
-                            Text("Food")
-                                .bold()
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 60, height: 40)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor)
-                                )
-                        }
-                        Button{
-                            
-                        }label:{
-                            Text("Service")
-                                .bold()
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 70, height: 40)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor)
-                                )
-                        }
-                        Button{
-                            
-                        }label:{
-                            Text("Nearby")
-                                .bold()
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 70, height: 40)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor)
-                                )
-                        }
-                        Button{
-                            
-                        }label:{
-                            Text("Trending")
-                                .bold()
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(Color.backgroundColor)
-                                .frame(width: 90, height: 40)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor)
-                                )
+                    // Search Bar Buttons
+                    HStack {
+                        ForEach([("Food", 60), ("Service", 70), ("Nearby", 70), ("Trending", 90)], id: \.0) { (title, width) in
+                            Button {} label: {
+                                Text(title)
+                                    .bold()
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(Color.backgroundColor)
+                                    .frame(width: CGFloat(width), height: 40)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .foregroundColor(Color.accentColor)
+                                    )
+                            }
                         }
                     }
                     
-                    Button{
+                    Button {
                         showAddRestaurant = true
-                    }label:{
+                    } label: {
                         Image(systemName: "plus.app.fill")
                             .bold()
-                            .font(.system(size:40))
+                            .font(.system(size: 40))
                     }
+                    
+                    // Featured Restaurants
+                    HStack {
+                        Text("Featured Restaurants").bold()
+                        Spacer()
+                    }.padding()
+                    VStack {
+                        HStack {
+                            Text("Featured Restaurants")
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 180, height: 80)
+                                .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(Color.accentColor))
+                        }
+                    }.padding()
+                    
+                    HStack {
+                        Text("Top Rated Near You").bold()
+                        Spacer()
+                    }.padding()
+                    VStack {
+                        HStack {
+                            Text("Restaurants")
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 150, height: 80)
+                                .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(Color.accentColor))
+                        }
+                    }.padding()
+                    
+                    HStack {
+                        Text("Favorited Restaurants").bold()
+                        Spacer()
+                    }.padding()
+                    VStack {
+                        HStack {
+                            Text("Favorited Restaurants")
+                                .foregroundColor(Color.backgroundColor)
+                                .frame(width: 180, height: 80)
+                                .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .foregroundColor(Color.accentColor))
+                        }
+                    }.padding()
                 }
-                //display restaurants based on their categories
-                HStack{
-                    Text("Featured Restaurants")
-                        .bold()
-                    Spacer()
-                }.padding()
-                VStack{
-                    HStack{
-                        Text("Featured Restaurants")
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width:180,height:80)
-                            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(Color.accentColor))
-                    }
-                }.padding()
-                
-                HStack{
-                    Text("Top Rated Near You")
-                        .bold()
-                    Spacer()
-                }.padding()
-                VStack{
-                    HStack{
-                        Text("Restaurants")
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width:150,height:80)
-                            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(Color.accentColor))
-                    }
-                }.padding()
-                
-                HStack{
-                    Text("Favorited Restaurants")
-                        .bold()
-                    Spacer()
-                }.padding()
-                
-                VStack{
-                    HStack{
-                        Text("Favorited Restaurants")
-                            .foregroundColor(Color.backgroundColor)
-                            .frame(width:180,height:80)
-                            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .foregroundColor(Color.accentColor))
-                    }
-                }.padding()
-                
+            }
             .navigationBarBackButtonHidden(true)
-                .frame(width: 350)
-                .frame(maxWidth: .infinity)
-                .sheet(isPresented: $showAddRestaurant){
-                    AddRestaurantView()
-                }
-                .navigationDestination(item:$selectedUserId) { userId in
-                    PublicProfileView(userId: userId)
-                }
+            .frame(width: 350)
+            .frame(maxWidth: .infinity)
+            .sheet(isPresented: $showAddRestaurant) {
+                AddRestaurantView()
+            }
+            .navigationDestination(item: $selectedUserId) { userId in
+                PublicProfileView(userId: userId)
+            }
         }
     }
 }
-
-
