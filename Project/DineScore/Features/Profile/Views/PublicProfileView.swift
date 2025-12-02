@@ -8,6 +8,16 @@ struct PublicProfileView: View {
         _vm = StateObject(wrappedValue: PublicProfileViewModel(userId: userId))
     }
     
+    // Build a dynamic title using normalized names, with a safe fallback
+    private var navTitle: String {
+        if let user = vm.user {
+            let combined = user.displayNameShort
+            return combined.isEmpty ? "Profile" : combined
+        } else {
+            return "Profile"
+        }
+    }
+    
     var body: some View {
         ZStack {
             Color.backgroundColor.ignoresSafeArea()
@@ -45,7 +55,7 @@ struct PublicProfileView: View {
                                     .padding(.horizontal)
                             }
                             
-                            // You can add sections here: lists/reviews/likes preview, etc.
+                            // Add sections (lists/reviews/likes) as needed
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -58,7 +68,7 @@ struct PublicProfileView: View {
             .padding(.horizontal)
         }
         .task { await vm.load() }
-        .navigationTitle("Profile")
+        .navigationTitle(navTitle)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

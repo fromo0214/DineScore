@@ -7,6 +7,8 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import PhotosUI
+import SwiftUI
 
 @MainActor
 final class UserProfileViewModel: ObservableObject{
@@ -15,14 +17,76 @@ final class UserProfileViewModel: ObservableObject{
     @Published var currentUser: AppUser? = nil
     @Published var followerUsers: [AppUser] = []
     @Published var followingUsers: [AppUser] = []
+    @Published var selectedPhoto: PhotosPickerItem?
+    @Published var pickedImage: UIImage?
+
+
+    @Published var errorText: String?
+    @Published var isSavingPhoto: Bool = false
+    @Published var photoSaved: Bool = false
+
     
     private let db = Firestore.firestore()
     private let repo = AppUserRepository()
+    private let uploader = ImageUploader()
     
     func loadSocials(for user: AppUser) async{
         followerUsers = await fetchUsers(ids: user.followers)
         followingUsers = await fetchUsers(ids: user.following)
     }
+    
+    func loadPickedPhoto() async {
+        guard let item = selectedPhoto else { return }
+        do {
+            if let data = try await item.loadTransferable(type: Data.self),
+               let img = UIImage(data: data)
+            {
+                self.pickedImage = img
+            }
+        } catch {
+            self.errorText = "Could not load image."
+        }
+    }
+    
+    // Upload avatar, update Firestore, and refresh local user
+    func saveProfilePhoto() async {
+        guard !isSavingPhoto else { return }
+        
+        guard let img = pickedImage else {
+            errorMessage = "Please pick a photo first."
+            return
+        }
+        
+        guard let uid = Auth.auth().currentUser?.uid else {
+            errorMessage = "Not signed in."
+            return
+        }
+        
+        isSavingPhoto = true
+        defer { isSavingPhoto = false }
+        
+        do {
+            let url = try await uploader.uploadUserAvatar(img, userId: uid)
+            // Update Firestore with both internal and public field names
+            try await db.collection("users").document(uid).setData([
+                "profileImageURL": url,
+                "profilePicture": url, // mirror for UserPublic
+                "updatedAt": FieldValue.serverTimestamp()
+            ], merge: true)
+            
+            if var user = currentUser {
+                user.profileImageURL = url
+                currentUser = user
+            }
+            photoSaved = true
+            pickedImage = nil
+            selectedPhoto = nil
+            
+        } catch {
+            errorMessage = "Failed to save photo: \(error.localizedDescription)"
+        }
+    }
+    
     
     //retrieves users followers/following ids at the same time
     private func fetchUsers(ids: [String]) async -> [AppUser]{
@@ -43,7 +107,7 @@ final class UserProfileViewModel: ObservableObject{
             for await user in group{
                 if let user { results.append(user) }
             }
-            return results
+            return results  
         }
     }
     

@@ -24,7 +24,6 @@ final class AppUserRepository{
 
     func searchUsers(prefix: String, limit: Int = 20) async throws -> [UserPublic] {
         let q = prefix.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        // Only return empty when the query is empty
         guard !q.isEmpty else { return [] }
         
         async let usernames = try queryPrefix(field: "username_normalized", q: q, limit: limit)
@@ -32,7 +31,6 @@ final class AppUserRepository{
         async let lastNames = try queryPrefix(field: "lastName_normalized", q: q, limit: limit)
         
         var combined = try await (usernames + firstNames + lastNames)
-        //remove duplicates by id
         var seen = Set<String>()
         combined = combined.filter { seen.insert($0.id!).inserted }
         
@@ -44,7 +42,6 @@ final class AppUserRepository{
             .order(by: field)
             .start(at: [q])
             .end(at: [q + "\u{f8ff}"])
-//            .whereField(field, isEqualTo: q)
             .limit(to: limit)
             .getDocuments()
         print("DEBUG: Query returned \(snapshot.documents.count)")
@@ -74,8 +71,6 @@ final class AppUserRepository{
         // Derive public/normalized fields
         let firstLower = user.firstName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let lastLower  = user.lastName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        
-        // If you have a username field elsewhere, use it. Otherwise derive from email prefix.
         let username = user.email.split(separator: "@").first.map(String.init) ?? ""
         let usernameLower = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         
@@ -86,6 +81,8 @@ final class AppUserRepository{
         merged["firstName_normalized"] = firstLower
         merged["lastName_normalized"] = lastLower
         merged["username_normalized"] = usernameLower
+        // Mirror to public field name used by UserPublic
+        if let url = user.profileImageURL { merged["profilePicture"] = url }
         
         try await users.document(uid).setData(merged, merge: false)
     }
@@ -107,6 +104,8 @@ final class AppUserRepository{
         merged["firstName_normalized"] = firstLower
         merged["lastName_normalized"] = lastLower
         merged["username_normalized"] = usernameLower
+        // Mirror to public field name used by UserPublic
+        if let url = user.profileImageURL { merged["profilePicture"] = url }
         
         try await users.document(uid).setData(merged, merge: true)
     }
@@ -115,3 +114,4 @@ final class AppUserRepository{
         try await users.document(uid).setData(["lastLoginAt": Date()], merge: true)
     }
 }
+

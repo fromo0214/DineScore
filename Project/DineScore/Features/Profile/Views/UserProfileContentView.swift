@@ -5,6 +5,7 @@
 //  Created by Fernando Romo on 8/19/25.
 //
 import SwiftUI
+import PhotosUI
 
 struct UserProfileContentView: View {
     
@@ -18,17 +19,15 @@ struct UserProfileContentView: View {
     @State var dob : Date = Date()
     
     init(currentUser: AppUser, vm: UserProfileViewModel) {
-           self.currentUser = currentUser
-           _vm = ObservedObject(wrappedValue: vm)
-           _firstName = State(initialValue: currentUser.firstName)
-           _lastName  = State(initialValue: currentUser.lastName)
-           _email     = State(initialValue: currentUser.email)
-           _zipCode   = State(initialValue: currentUser.zipCode ?? "")
-       }
-   
+        self.currentUser = currentUser
+        _vm = ObservedObject(wrappedValue: vm)
+        _firstName = State(initialValue: currentUser.firstName)
+        _lastName  = State(initialValue: currentUser.lastName)
+        _email     = State(initialValue: currentUser.email)
+        _zipCode   = State(initialValue: currentUser.zipCode ?? "")
+    }
     
     
-   
     
     var body: some View {
         ZStack(alignment: .topLeading){
@@ -36,12 +35,56 @@ struct UserProfileContentView: View {
                 .ignoresSafeArea()
             
             VStack(alignment: .leading){
-                HStack{
-                    VStack{
+                HStack(alignment: .top, spacing: 16){
+                    VStack(spacing: 8){
                         //--TODO: CHANGE TO BUTTON
-                        Image(systemName: "person.crop.circle.fill")
-                            .foregroundColor(Color.accentColor)
-                            .font(Font.system(size:90))
+                        Group{
+                            if let picked = vm.pickedImage{
+                                Image(uiImage: picked)
+                                    .resizable()
+                                    .scaledToFill()
+                            }else if let urlStr = vm.currentUser?.profileImageURL ??
+                                        currentUser.profileImageURL,
+                                     let url = URL(string: urlStr){
+                                AsyncImage(url: url) { img in
+                                    img.resizable().scaledToFill()
+                                }placeholder: {
+                                    Circle().fill(Color.gray.opacity(0.2))
+                                }
+                            }else{
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .foregroundColor(Color.accentColor)
+                            }
+                            
+                        }
+                        .frame(width: 110, height: 110)
+                        .clipShape(Circle())
+                        
+                        PhotosPicker(selection: $vm.selectedPhoto, matching: .images){
+                            Label("Change Photo", systemImage: "photo")
+                                .font(.footnote)
+                        }.onChange(of: vm.selectedPhoto) { _, _ in
+                            Task { await vm.loadPickedPhoto() }
+                        }
+                        
+                        Button{
+                            Task { await vm.saveProfilePhoto() }
+                        } label: {
+                            HStack {
+                                if vm.isSavingPhoto { ProgressView() }
+                                Text("Save Photo")
+                            }
+                        }
+                        .disabled(vm.pickedImage == nil || vm.isSavingPhoto)
+                        .buttonStyle(.borderedProminent)
+                        
+                        if vm.photoSaved{
+                            Text("Photo Updated!")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        }
                         
                         
                         Text("Taster 🍴")

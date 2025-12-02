@@ -92,7 +92,7 @@ final class AddRestaurantViewModel: ObservableObject{
             case .success(let id):
                 //restaurant is now saved in firestore with ID = normalizedKey
                 
-                //if user didn't pick photo
+                //if user didn't pick photo 
                 guard let img = self.pickedImage else {
                     Task {@MainActor in
                         self.isSaving = false
