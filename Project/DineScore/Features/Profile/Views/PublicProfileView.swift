@@ -30,10 +30,25 @@ struct PublicProfileView: View {
                         VStack(spacing: 16) {
                             // Header
                             VStack(spacing: 10) {
-                                AsyncImage(url: URL(string: user.profilePicture ?? "")) { img in
-                                    img.resizable().scaledToFill()
-                                } placeholder: {
-                                    Circle().fill(Color.gray.opacity(0.2))
+                                let url = user.profilePicture.flatMap { URL(string: $0) }
+                                AsyncImage(url: url, transaction: Transaction(animation: .easeInOut(duration: 0.15))) { phase in
+                                    switch phase {
+                                    case .success(let img):
+                                        img.resizable()
+                                            .scaledToFill()
+                                            .transition(.opacity)
+                                    case .empty:
+                                        Circle().fill(Color.gray.opacity(0.2))
+                                    case .failure:
+                                        ZStack {
+                                            Circle().fill(Color.gray.opacity(0.2))
+                                            Text(initials(from: user))
+                                                .font(.title3).bold()
+                                                .foregroundColor(.secondary)
+                                        }
+                                    @unknown default:
+                                        Circle().fill(Color.gray.opacity(0.2))
+                                    }
                                 }
                                 .frame(width: 96, height: 96)
                                 .clipShape(Circle())
@@ -71,4 +86,11 @@ struct PublicProfileView: View {
         .navigationTitle(navTitle)
         .navigationBarTitleDisplayMode(.inline)
     }
+    
+    private func initials(from user: UserPublic) -> String {
+        let f = user.firstName.first.map { String($0) } ?? ""
+        let l = user.lastName.first.map { String($0) } ?? ""
+        return (f + l).uppercased()
+    }
 }
+

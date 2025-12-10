@@ -159,4 +159,3 @@ struct UserProfileContentView: View {
     }
 }
 
-

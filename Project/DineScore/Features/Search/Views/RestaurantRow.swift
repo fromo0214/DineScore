@@ -1,12 +1,18 @@
-// Features/Search/UserRow.swift
+//
+//  RestaurantRow.swift
+//  DineScore
+//
+//  Created by Fernando Romo on 12/9/25.
+//
+
 import SwiftUI
 
-struct UserRow: View {
-    let user: UserPublic
+struct RestaurantRow: View {
+    let restaurant: RestaurantPublic
     
     var body: some View {
         HStack(spacing: 12) {
-            let url = user.profilePicture.flatMap { URL(string: $0) }
+            let url = restaurant.coverPicture.flatMap { URL(string: $0) }
             AsyncImage(url: url, transaction: Transaction(animation: .easeInOut(duration: 0.15))) { phase in
                 switch phase {
                 case .success(let img):
@@ -18,7 +24,7 @@ struct UserRow: View {
                 case .failure:
                     ZStack {
                         Circle().fill(Color.gray.opacity(0.2))
-                        Text(initials(from: user))
+                        Text(initial(from: restaurant))
                             .font(.caption).bold()
                             .foregroundColor(.secondary)
                     }
@@ -30,12 +36,12 @@ struct UserRow: View {
             .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(user.displayNameShort)
+                Text(restaurant.name)
                     .font(.subheadline)
                     .bold()
-                Text("@\(user.username)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+//                Text("@\(user.username)")
+//                    .font(.caption)
+//                    .foregroundColor(.secondary)
             }
             Spacer()
             //FollowButton(targetUserId: user.id)
@@ -43,10 +49,9 @@ struct UserRow: View {
         .padding(.vertical, 6)
     }
     
-    private func initials(from user: UserPublic) -> String {
-        let f = user.firstName.first.map { String($0) } ?? ""
-        let l = user.lastName.first.map { String($0) } ?? ""
-        return (f + l).uppercased()
+    private func initial(from restaurant: RestaurantPublic) -> String {
+        let n = restaurant.name.first.map { String($0) } ?? ""
+        return (n).uppercased()
     }
 }
 

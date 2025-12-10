@@ -50,7 +50,6 @@ struct Restaurant: Identifiable, Codable{
        static func makeNormalizedKey(name: String, address: String) -> String {
            // 1) Trim & collapse internal whitespace
          
-
            let n = name.trimAndCollapseSpaces()
            let a = address.trimAndCollapseSpaces()
 

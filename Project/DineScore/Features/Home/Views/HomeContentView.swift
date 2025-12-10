@@ -5,6 +5,7 @@ struct HomeContentView: View {
     @StateObject private var vm = SearchViewModel()
     @State private var selectedUserId: String?
     @State private var isSearching = false
+    @State private var selectedRestaurantId: String?
     
     var body: some View {
         NavigationStack {
@@ -28,20 +29,20 @@ struct HomeContentView: View {
                     
                     if isSearching {
                         // Present search view instead of home content
-                        SearchView(vm: vm, isSearching: $isSearching, selectedUserId: $selectedUserId)
+                        SearchView(vm: vm, isSearching: $isSearching, selectedUserId: $selectedUserId, selectedRestaurantId: $selectedRestaurantId)
                             .frame(maxWidth: CGFloat.infinity)
                     } else {
                         // Home Content
                         HStack {
                             Image(systemName: "magnifyingglass")
                                 .foregroundColor(Color.accentColor)
-                            TextField("Search restaurants, dishes, ...", text: $vm.searchText)
+                            TextField("Find restaurants, dishes, users...", text: $vm.searchText)
                                 .disableAutocorrection(true)
                                 .autocapitalization(.none)
                                 .foregroundColor(Color.accentColor)
                                 .bold()
                                 .placeholder(when: vm.searchText.isEmpty){
-                                    Text("Search restaurants, dishes, ...")
+                                    Text("Find restaurants, dishes, users...")
                                         .foregroundColor(Color.accentColor)
                                         .bold()
                                 }
@@ -140,6 +141,9 @@ struct HomeContentView: View {
                 }
                 .navigationDestination(item: $selectedUserId) { userId in
                     PublicProfileView(userId: userId)
+                }
+                .navigationDestination(item: $selectedRestaurantId) {restaurantId in
+                    RestaurantView(restaurantId: restaurantId)
                 }
             }
         }

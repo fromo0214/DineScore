@@ -1,17 +1,23 @@
-// Features/Profile/PublicProfileViewModel.swift
+//
+//  RestaurantViewModel.swift
+//  DineScore
+//
+//  Created by Fernando Romo on 12/9/25.
+//
+
 import Foundation
 
 @MainActor
-final class PublicProfileViewModel: ObservableObject {
-    @Published var user: UserPublic?
+final class RestaurantViewModel: ObservableObject {
+    @Published var restaurant: RestaurantPublic?
     @Published var isLoading = false
     @Published var errorMessage = ""
     
-    private let repo = AppUserRepository()
-    let userId: String
+    private let repo = RestaurantRepository()
+    let restaurantId: String
     
-    init(userId: String) {
-        self.userId = userId
+    init(restaurantId: String) {
+        self.restaurantId = restaurantId
     }
     
     func load() async {
@@ -19,11 +25,11 @@ final class PublicProfileViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            user = try await repo.fetchUser(id: userId)
-            if let urlStr = user?.profilePicture {
+            restaurant = try await repo.fetchRestaurant(id: restaurantId)
+            if let urlStr = restaurant?.coverPicture {
                 prefetch(urlString: urlStr)
             }
-            if user == nil { errorMessage = "User not found." }
+            if restaurant == nil { errorMessage = "Restaurant not found." }
         } catch {
             errorMessage = error.localizedDescription
         }

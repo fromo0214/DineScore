@@ -1,4 +1,8 @@
 // UserSession.swift
+//UserSession listens to the Firestore users/{uid} document for the currently authenticated user
+//and exposes it as currentUser to your SwiftUI views, starting/stopping that live connection
+//with start() and stop().
+
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
@@ -10,6 +14,7 @@ final class UserSession: ObservableObject {
 
     private let db = Firestore.firestore()
 
+    //Checks if someone is logged in, UI changes react instantly to any changes in user document
     func start() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         // Live listener returns cached data immediately (if available) and then server updates
@@ -21,6 +26,7 @@ final class UserSession: ObservableObject {
         }
     }
 
+    //call this during log out
     func stop() {
         listener?.remove()
         listener = nil

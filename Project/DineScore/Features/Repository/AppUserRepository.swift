@@ -44,13 +44,13 @@ final class AppUserRepository{
             .end(at: [q + "\u{f8ff}"])
             .limit(to: limit)
             .getDocuments()
-        print("DEBUG: Query returned \(snapshot.documents.count)")
+        //print("DEBUG:(Users) Query returned \(snapshot.documents.count)")
         let results = snapshot.documents.compactMap{ doc in
             let data = doc.data()
-            print("Raw data for doc:", data)
+            print("Raw data for user:", data)
             return try? doc.data(as: UserPublic.self)
         }
-        print("DEBUG: Successfully decoded \(results.count) users")
+        //print("DEBUG: Successfully decoded \(results.count) users")
         return results
     }
     

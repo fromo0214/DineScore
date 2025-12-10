@@ -7,15 +7,24 @@
 import Foundation
 import Combine
 
+enum SearchScope: String, CaseIterable, Identifiable {
+    case users = "Users"
+    case restaurants = "Restaurants"
+    var id: String { rawValue }
+}
+
 @MainActor
 final class SearchViewModel: ObservableObject {
     
     @Published var searchText: String = ""
-    @Published var results: [UserPublic] = []
+    @Published var userResults: [UserPublic] = []
+    @Published var restaurantResults: [RestaurantPublic] = []
     @Published var isLoading = false
     @Published var errorMessage = ""
+    @Published var scope: SearchScope = .restaurants
     
-    private let repo = AppUserRepository()
+    private let restaurantRepo = RestaurantRepository()
+    private let userRepo = AppUserRepository()
     private var cancellables: Set<AnyCancellable> = []
     
     init() {
@@ -30,22 +39,40 @@ final class SearchViewModel: ObservableObject {
     }
     
     func performSearch(_ text: String) async {
-        print("Searching for:", text)
         errorMessage = ""
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            results = []
+        let q = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else {
+            userResults = []
+            restaurantResults = []
             return
         }
+        
         isLoading = true
-        do {
-            let users = try await repo.searchUsers(prefix: text, limit: 20)
-            print("Users returned:", users.count)
-            results = users
-        } catch{
-            print("Search Error", error)
-            errorMessage = error.localizedDescription
-            results = []
+        defer { isLoading = false }
+        
+        switch scope {
+        case .users:
+            do {
+                let users = try await userRepo.searchUsers(prefix: q, limit: 20)
+                userResults = users
+                restaurantResults = []
+            } catch {
+                errorMessage = error.localizedDescription
+                userResults = []
+                restaurantResults = []
+            }
+            
+        case .restaurants:
+            do {
+                let restaurants = try await restaurantRepo.searchRestaurants(prefix: q, limit: 20)
+                restaurantResults = restaurants
+                userResults = []
+            } catch {
+                errorMessage = error.localizedDescription
+                userResults = []
+                restaurantResults = []
+            }
         }
-        isLoading = false
     }
 }
+

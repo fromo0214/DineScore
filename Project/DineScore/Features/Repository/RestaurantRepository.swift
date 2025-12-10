@@ -7,24 +7,58 @@
 
 import FirebaseAuth
 import FirebaseFirestore
+import Foundation
 
 final class RestaurantRepository{
+    
     private let db = Firestore.firestore()
-    private var col: CollectionReference { db.collection("restaurants")}
     
+    //All restaurants saved in firestore
+    private var restaurants: CollectionReference { db.collection("restaurants")}
     
-    //Java spring boot translation
-    // Equivalent behavior with SQL
-//    if (!restaurantRepository.existsById(normalizedKey)) {
-//        restaurantRepository.save(new Restaurant(normalizedKey, name, address, ...));
-//    }
+    //fetches restaurant document from firestore
+    func fetchRestaurant(id: String) async throws -> RestaurantPublic? {
+        let snap = try await restaurants.document(id).getDocument()
+        guard snap.exists else { return nil }
+        return try snap.data(as: RestaurantPublic.self)
+    }
+    
+    func searchRestaurants(prefix: String, limit: Int = 20) async throws -> [RestaurantPublic] {
+        let q = prefix.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !q.isEmpty else { return [] }
+        
+        async let name = try queryPrefix(field: "name_normalized", q: q, limit: limit)
+       
+        var combined = try await (name)
+        var seen = Set<String>()
+        combined = combined.filter { seen.insert($0.id ?? UUID().uuidString).inserted }
+        
+        return Array(combined.prefix(limit))
+    }
+    
+    private func queryPrefix(field: String, q: String, limit: Int) async throws -> [RestaurantPublic] {
+        let snapshot = try await restaurants
+            .order(by: field)
+            .start(at: [q])
+            .end(at: [q + "\u{f8ff}"])
+            .limit(to: limit)
+            .getDocuments()
+        print("DEBUG:(Restaurants) Query returned \(snapshot.documents.count)")
+        let results = snapshot.documents.compactMap{ doc in
+            let data = doc.data()
+            print("Raw data for restaurant:", data)
+            return try? doc.data(as: RestaurantPublic.self)
+        }
+        print("DEBUG: Successfully decoded \(results.count) restaurants")
+        return results
+    }
     
     //prevents duplicated by normalizedKey (name + address)
     func createRestaurantIfNeeded(_ r: Restaurant, completion: @escaping (Result<String, Error>) -> Void) {
         let id = r.normalizedKey  // deterministic ID
         
         //SELECT * FROM restaurants WHERE id = :normalizedKey;
-        let ref = col.document(id)
+        let ref = restaurants.document(id)
         
         // First read to see if it exists
         ref.getDocument { snap, err in
@@ -38,7 +72,11 @@ final class RestaurantRepository{
                 var toSave = r
                 toSave.ownerId = Auth.auth().currentUser?.uid ?? "unknown"
                 do {
-                    let data = try Firestore.Encoder().encode(toSave)
+                    var data = try Firestore.Encoder().encode(toSave)
+                    // Add normalized field used by search
+                    if let nameValue = (data["name"] as? String) ?? (Mirror(reflecting: toSave).children.first { $0.label == "name" }?.value as? String) {
+                        data["name_normalized"] = self.normalize(nameValue)
+                    }
                     ref.setData(data) { error in
                         if let error = error { completion(.failure(error)) }
                         else { completion(.success(id)) }
@@ -47,6 +85,13 @@ final class RestaurantRepository{
                     completion(.failure(error))
                 }
             }
-        }
+        }   
+    }
+    
+    // Normalize strings for case/diacritic-insensitive search
+    private func normalize(_ s: String) -> String {
+        s.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .lowercased()
     }
 }
