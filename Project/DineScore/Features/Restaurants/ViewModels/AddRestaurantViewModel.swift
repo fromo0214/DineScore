@@ -114,7 +114,7 @@ final class AddRestaurantViewModel: ObservableObject{
                         
                     case .success(let url):
                         //got download url from storage, now patch firestore with it
-                        Firestore.firestore().collection("restaurants").document(id).updateData(["photoURL": url, "updatedAt" : FieldValue.serverTimestamp()]){_ in
+                        Firestore.firestore().collection("restaurants").document(id).updateData(["coverPicture": url, "updatedAt" : FieldValue.serverTimestamp()]){_ in
                             Task {@MainActor in
                                 self.isSaving = false
                                 self.showDone = true
