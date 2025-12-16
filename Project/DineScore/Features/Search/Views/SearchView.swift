@@ -11,20 +11,28 @@ struct SearchView: View {
     var body: some View {
         VStack {
             // Search Bar
-            HStack {
+            HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.accentColor)
+                
                 TextField("Find restaurants, dishes, users...", text: $vm.searchText)
                     .disableAutocorrection(true)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .foregroundColor(Color.accentColor)
                     .bold()
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .layoutPriority(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .placeholder(when: vm.searchText.isEmpty) {
                         Text("Find restaurants, dishes, users...")
                             .foregroundColor(Color.accentColor)
                             .bold()
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                     }
                     .focused($isSearchFieldFocused)
+                
                 Button("Cancel") {
                     // Clear focus first so the keyboard dismisses smoothly
                     isSearchFieldFocused = false
@@ -34,8 +42,11 @@ struct SearchView: View {
                     isSearching = false
                 }
                 .foregroundColor(.accentColor)
+                .lineLimit(1)
             }
-            .padding([.horizontal, .top])
+            .frame(height: 44)
+            .padding(.horizontal)
+            .padding(.top)
             .onAppear {
                 // Auto-focus when the search view appears
                 DispatchQueue.main.async {
@@ -44,8 +55,10 @@ struct SearchView: View {
             }
             
             Rectangle()
-                .frame(width: 360, height: 1)
+                .frame(height: 1)
+                .frame(maxWidth: .infinity)
                 .foregroundColor(Color.accentColor)
+                .padding(.horizontal)
             
             // Scope Picker
             Picker("Scope", selection: $vm.scope) {

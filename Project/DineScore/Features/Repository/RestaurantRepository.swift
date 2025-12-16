@@ -43,13 +43,13 @@ final class RestaurantRepository{
             .end(at: [q + "\u{f8ff}"])
             .limit(to: limit)
             .getDocuments()
-        print("DEBUG:(Restaurants) Query returned \(snapshot.documents.count)")
+        //print("DEBUG:(Restaurants) Query returned \(snapshot.documents.count)")
         let results = snapshot.documents.compactMap{ doc in
             let data = doc.data()
             print("Raw data for restaurant:", data)
             return try? doc.data(as: RestaurantPublic.self)
         }
-        print("DEBUG: Successfully decoded \(results.count) restaurants")
+        //print("DEBUG: Successfully decoded \(results.count) restaurants")
         return results
     }
     
