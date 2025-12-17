@@ -44,13 +44,11 @@ final class AppUserRepository{
             .end(at: [q + "\u{f8ff}"])
             .limit(to: limit)
             .getDocuments()
-        //print("DEBUG:(Users) Query returned \(snapshot.documents.count)")
         let results = snapshot.documents.compactMap{ doc in
             let data = doc.data()
             print("Raw data for user:", data)
             return try? doc.data(as: UserPublic.self)
         }
-        //print("DEBUG: Successfully decoded \(results.count) users")
         return results
     }
     
@@ -58,7 +56,18 @@ final class AppUserRepository{
     func get(uid: String) async throws -> AppUser? {
         let ref = users.document(uid)
         let snap = try await ref.getDocument()
-        return try snap.data(as: AppUser?.self)
+        guard snap.exists else { return nil }
+        // IMPORTANT: decode as AppUser.self (non-optional), not AppUser?.self
+        return try snap.data(as: AppUser.self)
+    }
+    
+    //getter for likedRestaurants
+    func getLikedRestaurants(uid: String) async throws -> [String] {
+        let ref = users.document(uid)
+        let snap = try await ref.getDocument()
+        guard snap.exists else { return [] }
+        // Safely coerce to [String]; default to [] if missing or wrong type
+        return (snap.get("likedRestaurants") as? [String]) ?? []
     }
     
     //create a new user document
@@ -112,6 +121,19 @@ final class AppUserRepository{
     
     func updateLastLogin(uid: String) async throws{
         try await users.document(uid).setData(["lastLoginAt": Date()], merge: true)
+    }
+    
+    // MARK: - Likes helpers
+    func likeRestaurant(uid: String, restaurantId: String) async throws {
+        try await users.document(uid).updateData([
+            "likedRestaurants": FieldValue.arrayUnion([restaurantId])
+        ])
+    }
+    
+    func unlikeRestaurant(uid: String, restaurantId: String) async throws {
+        try await users.document(uid).updateData([
+            "likedRestaurants": FieldValue.arrayRemove([restaurantId])
+        ])
     }
 }
 

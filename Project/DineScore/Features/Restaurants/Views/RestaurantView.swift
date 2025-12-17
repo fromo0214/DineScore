@@ -3,6 +3,8 @@ import SwiftUI
 struct RestaurantView: View {
     @StateObject private var vm: RestaurantViewModel
     @State private var showActionsSheet = false
+    @State private var showReviewSheet = false
+    
     init(restaurantId: String) {
         _vm = StateObject(wrappedValue: RestaurantViewModel(restaurantId: restaurantId))
     }
@@ -36,11 +38,33 @@ struct RestaurantView: View {
                             
                             // Basic info
                             VStack(spacing: 6) {
-                                HStack{
-                                    Text(restaurant.name)
-                                        .font(.title2).bold()
-                                        .foregroundColor(.accent)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                    
+                                    HStack() {
+                                        Text(restaurant.name)
+                                            .font(.title2).bold()
+                                            .foregroundColor(.accent)
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .layoutPriority(1)
+
+                                        if let cuisine = restaurant.cuisine, !cuisine.isEmpty {
+                                            Text(cuisine)
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundColor(.backgroundColor)
+                                                .padding(.vertical, 4)
+                                                .padding(.horizontal, 8)
+                                                .background(
+                                                    Capsule().fill(Color.accentColor.opacity(0.85))
+                                                )
+                                                .fixedSize(horizontal: true, vertical: true)
+                                                .accessibilityLabel("Cuisine: \(cuisine)")
+                                        }
+
+                                        Spacer()
+
+                                    
+                                    
                                     if let priceLevel = restaurant.priceLevel {
                                         // Clamp to a reasonable range (e.g., 0...5)
                                         let clamped = max(0, min(priceLevel, 5))
@@ -77,29 +101,57 @@ struct RestaurantView: View {
                             }
                             .padding(.horizontal)
                                 
-                            HStack{
-                                if let address = restaurant.address, !address.isEmpty {
-                                    Text(address)
-                                        .font(.subheadline)
-                                        .foregroundColor(.accent)
-                                        .frame(maxWidth:.infinity, alignment: .leading)
-                                        .bold()
-                                        .padding()
+                            HStack(alignment: .top, spacing: 12){
+                                if let address = restaurant.address, let city = restaurant.city, let state = restaurant.state, let zipCode = restaurant.zipCode, !address.isEmpty {
+                                    AddressCard(address: address, city: city, state: state, zipCode: zipCode, name: restaurant.name)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 
-                                InfoStatBox(title: nil, value: "Review, like, add to list...", action:{
-                                    showActionsSheet = true
-                                })
+                              
+                            }
+                            .padding(.horizontal)
+                            
+                            // Action row: Like / Review / Share styled like InfoStatBox
+                            HStack(spacing: 12) {
+                                ActionStatButton(
+                                    title: vm.isLiked ? "Unlike" : "Like",
+                                    systemImage: vm.isLiked ? "heart.fill" : "heart"
+                                ) {
+                                    // TODO: Implement direct like action.
+                                    Task { await vm.toggleLike() }
+                                }
+                                .disabled(vm.isLiking)
+                                .opacity(vm.isLiking ? 0.6 : 1.0)
                                 
-                            }.padding()
+                                ActionStatButton(
+                                    title: "Review",
+                                    systemImage: "square.and.pencil"
+                                ) {
+                                    // TODO: Navigate to review flow
+                                    showReviewSheet = true
+                                }
+                                
+                                // Share styled to match
+                                ActionShareBox(
+                                    title: "Share",
+                                    systemImage: "square.and.arrow.up",
+                                    shareText: {
+                                        if let address = restaurant.address,
+                                           let city = restaurant.city,
+                                           let state = restaurant.state,
+                                           let zip = restaurant.zipCode {
+                                            return "\(restaurant.name)\n\(address), \(city), \(state) \(zip)"
+                                        } else {
+                                            return restaurant.name
+                                        }
+                                    }()
+                                )
+                            }
+                            .padding(.horizontal)
                             
                             //All tags users have used for restaurant
                             HStack{
-                                if let cuisine = restaurant.cuisine, !cuisine.isEmpty {
-                                    Text(cuisine)
-                                        .font(.subheadline)
-                                        .foregroundColor(.accent)
-                                }
+                               
                             }
                             
                             // Add sections (lists/reviews/likes) as needed
@@ -120,23 +172,29 @@ struct RestaurantView: View {
         .navigationTitle(navTitle)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showActionsSheet) {
-            ActionOptionsSheet(
-                onLike: {
-                    // TODO: Implement "Like" action
-                    showActionsSheet = false
-                },
-                onReview: {
-                    // TODO: Navigate to review flow
-                    showActionsSheet = false
-                },
-                onAddToList: {
-                    // TODO: Present list picker
-                    showActionsSheet = false
-                }
-            )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-            .background(Color.backgroundColor)
+            if let restaurant = vm.restaurant {
+                ActionOptionsSheet(
+                    restaurant: restaurant,
+                    onLike: {
+                        // TODO: Implement "Like" action
+                        showActionsSheet = false
+                    },
+                    onReview: {
+                        // TODO: Navigate to review flow
+                        showActionsSheet = false
+                    },
+                    onAddToList: {
+                        // TODO: Present list picker
+                        showActionsSheet = false
+                    }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .background(Color.backgroundColor)
+            } else {
+                // Fallback in case restaurant becomes nil
+                EmptyView()
+            }
         }
     }
     
@@ -187,6 +245,7 @@ private struct InfoStatBox: View {
     let value: String? // optional so we can omit the value section entirely
     var showsChevron: Bool = false
     var action: (() -> Void)? = nil
+
     
     @State private var isExpanded = false
     
@@ -239,7 +298,17 @@ private struct InfoStatBox: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(isExpanded ? nil : 1) // collapsed shows one line
-                    .accessibilityLabel("\(title): \(v)")
+                    .accessibilityLabel(
+                        Text(
+                            verbatim: {
+                                if let t = title, !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    return "\(t): \(v)"
+                                } else {
+                                    return v
+                                }
+                            }()
+                        )
+                    )
             }
         }
         .padding(12)
@@ -262,12 +331,95 @@ private struct InfoStatBox: View {
     }
 }
 
+// Address card for nicer presentation + actions
+private struct AddressCard: View {
+    let address: String
+    let city: String
+    let state: String
+    let zipCode: String
+    let name: String
+    
+    @Environment(\.openURL) private var openURL
+    
+    private var mapsURL: URL? {
+        // Prefer a name + address query to improve accuracy
+        let query = "\(name) \(address)"
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return URL(string: "http://maps.apple.com/?q=\(encoded)")
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Address", systemImage: "mappin.and.ellipse")
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.accent)
+            
+            Text(address + ", \(city), \(state) \(zipCode)")
+                .font(.subheadline)
+                .foregroundColor(.accent)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
+                .lineLimit(nil)
+            
+            HStack(spacing: 8) {
+                if let url = mapsURL {
+                    Button {
+                        openURL(url)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                            Text("Directions")
+                                .lineLimit(1)
+                        }
+                        .fixedSize(horizontal: true, vertical: false)
+                        .layoutPriority(1)
+                        .font(.footnote.bold())
+                        .foregroundColor(.backgroundColor)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                        .background(
+                            Capsule().fill(Color.accentColor)
+                        )
+                    }
+                }
+                
+                ShareLink(item: address) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Share")
+                            .lineLimit(1)
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
+                    .font(.footnote.bold())
+                    .foregroundColor(.accent)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .background(
+                        Capsule().stroke(Color.accent, lineWidth: 1)
+                    )
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.textColor.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.textColor.opacity(0.08), lineWidth: 1)
+        )
+    }
+}
+
 // Bottom sheet with actions
 private struct ActionOptionsSheet: View {
+    let restaurant: RestaurantPublic
     var onLike: () -> Void
     var onReview: () -> Void
     var onAddToList: () -> Void
-    
+
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -278,7 +430,7 @@ private struct ActionOptionsSheet: View {
                 .padding(.top, 8)
                 .accessibilityHidden(true)
             
-            Text("Actions")
+            Text(restaurant.name)
                 .font(.title3).bold()
                 .foregroundColor(.accentColor)
                 .padding(.top, 4)
@@ -334,6 +486,55 @@ private struct ActionOptionsSheet: View {
     }
 }
 
+// MARK: - Styled Action Buttons (matching InfoStatBox look)
+private struct ActionStatButton: View {
+    let title: String
+    let systemImage: String
+    var action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.subheadline.weight(.semibold))
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundColor(.backgroundColor)
+            .frame(maxWidth: .infinity)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.textColor)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct ActionShareBox: View {
+    let title: String
+    let systemImage: String
+    let shareText: String
+    
+    var body: some View {
+        ShareLink(item: shareText) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.subheadline.weight(.semibold))
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundColor(.backgroundColor)
+            .frame(maxWidth: .infinity)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.textColor)
+            )
+        }
+    }
+}
 
 #Preview {
     RestaurantView(restaurantId: "test-restaurant-123-address")

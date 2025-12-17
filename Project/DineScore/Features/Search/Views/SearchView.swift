@@ -121,8 +121,8 @@ struct SearchView: View {
                                     Text(r.name)
                                         .foregroundColor(.accentColor)
                                         .bold()
-                                    if let address = r.address, !address.isEmpty {
-                                        Text(address)
+                                    if let city = r.city, let state = r.state, !state.isEmpty || !city.isEmpty {
+                                        Text(city + ", " + state)
                                             .font(.footnote)
                                             .foregroundColor(.accentColor.opacity(0.8))
                                     }

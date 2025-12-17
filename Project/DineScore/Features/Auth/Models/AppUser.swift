@@ -17,7 +17,7 @@ struct AppUser: Identifiable, Codable {
     var bio: String?
     var level: Int
     var zipCode: String?
-    var favoriteRestaurants: [String] // Restaurant IDs
+    var likedRestaurants: [String] // Restaurant IDs
     var followers: [String] //user ids
     var following: [String] //user ids
     var joinedDate: Date
@@ -34,7 +34,7 @@ struct AppUser: Identifiable, Codable {
             bio: nil,
             level: 1,
             zipCode: zipCode,
-            favoriteRestaurants: [],
+            likedRestaurants: [],
             followers: [],
             following: [],
             joinedDate: Date(),

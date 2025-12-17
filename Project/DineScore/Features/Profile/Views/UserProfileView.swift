@@ -66,7 +66,7 @@ struct UserProfileView: View {
                                 UserSocialsView(currentUser: user, vm: vm)
                             }
                         case .likes:
-                            UserLikesView()
+                            UserLikesView(vm: vm)
                         }
                     }
                     

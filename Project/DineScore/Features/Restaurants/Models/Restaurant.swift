@@ -24,6 +24,9 @@ struct Restaurant: Identifiable, Codable{
     @DocumentID var id: String?
     var name: String
     var address: String
+    var city: String
+    var state: String
+    var zipCode: String
     var cuisine: String
     var priceLevel: Int //1-4
     var photoURL: String?

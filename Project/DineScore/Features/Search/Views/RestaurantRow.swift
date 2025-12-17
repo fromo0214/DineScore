@@ -39,9 +39,7 @@ struct RestaurantRow: View {
                 Text(restaurant.name)
                     .font(.subheadline)
                     .bold()
-//                Text("@\(user.username)")
-//                    .font(.caption)
-//                    .foregroundColor(.secondary)
+
             }
             Spacer()
             //FollowButton(targetUserId: user.id)
