@@ -31,7 +31,7 @@ struct Restaurant: Identifiable, Codable{
     var priceLevel: Int //1-4
     var photoURL: String?
     var avgFoodScore: Double?
-    var avgFoodServiceScore: Double?
+    var avgServiceScore: Double?
     var reviewCount: Int?
     var ownerId: String //owner of person who uploaded restaurant
     var status: String //"pending", "active"

@@ -134,10 +134,72 @@ final class ImageUploader {
         }
     }
     
+    // MARK: - Review uploads
+    @MainActor
+    func uploadReviewImage(_ image: UIImage, reviewId: String) async throws -> String {
+        guard let data = image.jpegData(compressionQuality: 0.9) else {
+            throw ImageUploaderError.jpegEncoding
+        }
+        let ref = reviewImageRef(reviewId: reviewId, fileName: "image-\(UUID().uuidString).jpg")
+        print("[Uploader] (review) PUT to: \(ref.fullPath)")
+        
+        let meta = StorageMetadata()
+        meta.contentType = "image/jpeg"
+        
+        do {
+            _ = try await ref.putDataAsync(data, metadata: meta)
+            print("[Uploader] (review) putDataAsync OK")
+        } catch {
+            print("[Uploader] (review) putDataAsync ERROR: \(error.localizedDescription) (\((error as NSError).code))")
+            await debugListReviewFolder(reviewId: reviewId)
+            throw error
+        }
+        
+        do {
+            let url = try await ref.downloadURL()
+            print("[Uploader] (review) downloadURL OK: \(url.absoluteString)")
+            return url.absoluteString
+        } catch {
+            print("[Uploader] (review) downloadURL ERROR: \(error.localizedDescription) (\((error as NSError).code))")
+            do {
+                let _ = try await ref.getMetadata()
+                print("[Uploader] (review) getMetadata OK (object exists)")
+            } catch {
+                print("[Uploader] (review) getMetadata ERROR: \(error.localizedDescription) (\((error as NSError).code))")
+            }
+            await debugListReviewFolder(reviewId: reviewId)
+            throw error
+        }
+    }
+    
+    @MainActor
+    func uploadReviewImages(_ images: [UIImage], reviewId: String) async throws -> [String] {
+        guard !images.isEmpty else { return [] }
+        return try await withThrowingTaskGroup(of: String.self) { group in
+            for img in images {
+                group.addTask { [weak self] in
+                    guard let self else { throw ImageUploaderError.missingURL }
+                    return try await self.uploadReviewImage(img, reviewId: reviewId)
+                }
+            }
+            var urls: [String] = []
+            for try await url in group {
+                urls.append(url)
+            }
+            // Keep a stable order by URL or just return as-uploaded
+            return urls
+        }
+    }
+    
+    
     // MARK: - Path Builders
     private func restaurantFolderRef(restaurantId: String) -> StorageReference {
         let folder = slugify(restaurantId)
         return Storage.storage().reference().child("restaurants").child(folder)
+    }
+    private func reviewFolderRef(reviewId: String) -> StorageReference {
+        let folder = slugify(reviewId)
+        return Storage.storage().reference().child("reviews").child(folder)
     }
     
     private func userFolderRef(userId: String) -> StorageReference {
@@ -151,6 +213,9 @@ final class ImageUploader {
     
     private func restaurantCoverRef(restaurantId: String) -> StorageReference {
         restaurantFolderRef(restaurantId: restaurantId).child("cover.jpg")
+    }
+    private func reviewImageRef(reviewId: String, fileName: String) -> StorageReference {
+        reviewFolderRef(reviewId: reviewId).child(fileName)
     }
     
     // MARK: - Debug helpers
@@ -188,6 +253,20 @@ final class ImageUploader {
             print("[Uploader] (user) listAll items:", items)
         } catch {
             print("[Uploader] (user) listAll ERROR:", error.localizedDescription, "(\((error as NSError).code))")
+        }
+    }
+    
+    @MainActor
+    private func debugListReviewFolder(reviewId: String) async {
+        let folder = reviewFolderRef(reviewId: reviewId)
+        do {
+            let listing = try await folder.listAll()
+            let items = listing.items.map { $0.fullPath }
+            let prefixes = listing.prefixes.map { $0.fullPath }
+            print("[Uploader] (review) listAll prefixes:", prefixes)
+            print("[Uploader] (review) listAll items:", items)
+        } catch {
+            print("[Uploader] (review) listAll ERROR:", error.localizedDescription, "(\((error as NSError).code))")
         }
     }
 }

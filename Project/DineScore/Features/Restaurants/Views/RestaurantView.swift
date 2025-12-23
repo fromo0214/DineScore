@@ -43,7 +43,7 @@ struct RestaurantView: View {
                                     HStack() {
                                         Text(restaurant.name)
                                             .font(.title2).bold()
-                                            .foregroundColor(.accent)
+                                            .foregroundColor(.accentColor)
                                             .lineLimit(1)
                                             .truncationMode(.tail)
                                             .layoutPriority(1)
@@ -72,11 +72,11 @@ struct RestaurantView: View {
                                         
                                         HStack(spacing: 4) {
                                             Text("Price Level:")
-                                                .foregroundColor(.accent)
+                                                .foregroundColor(.accentColor)
                                                 .bold()
                                             Text(verbatim: dollars)
                                                 .font(.title2)
-                                                .foregroundColor(.accent)
+                                                .foregroundColor(.accentColor)
                                                 .accessibilityLabel("Price level \(clamped) out of 5")
                                         }
                                        
@@ -127,7 +127,7 @@ struct RestaurantView: View {
                                     title: "Review",
                                     systemImage: "square.and.pencil"
                                 ) {
-                                    // TODO: Navigate to review flow
+                                    // Present CreateReviewView with the already-loaded restaurant
                                     showReviewSheet = true
                                 }
                                 
@@ -160,6 +160,12 @@ struct RestaurantView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
+                    // Present CreateReviewView using RestaurantPublic (no extra fetch)
+                    .sheet(isPresented: $showReviewSheet) {
+                        CreateReviewView(restaurant: restaurant)
+                            .presentationDetents([.medium, .large])
+                            .presentationDragIndicator(.visible)
+                    }
                 } else if !vm.errorMessage.isEmpty {
                     Text(vm.errorMessage).foregroundColor(.red)
                 } else {
@@ -180,8 +186,9 @@ struct RestaurantView: View {
                         showActionsSheet = false
                     },
                     onReview: {
-                        // TODO: Navigate to review flow
+                        // Navigate to review flow
                         showActionsSheet = false
+                        showReviewSheet = true
                     },
                     onAddToList: {
                         // TODO: Present list picker
@@ -352,11 +359,11 @@ private struct AddressCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Address", systemImage: "mappin.and.ellipse")
                 .font(.subheadline.weight(.semibold))
-                .foregroundColor(.accent)
+                .foregroundColor(.accentColor)
             
             Text(address + ", \(city), \(state) \(zipCode)")
                 .font(.subheadline)
-                .foregroundColor(.accent)
+                .foregroundColor(.accentColor)
                 .fixedSize(horizontal: false, vertical: true)
                 .multilineTextAlignment(.leading)
                 .lineLimit(nil)
@@ -392,11 +399,11 @@ private struct AddressCard: View {
                     .fixedSize(horizontal: true, vertical: false)
                     .layoutPriority(1)
                     .font(.footnote.bold())
-                    .foregroundColor(.accent)
+                    .foregroundColor(.accentColor)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 10)
                     .background(
-                        Capsule().stroke(Color.accent, lineWidth: 1)
+                        Capsule().stroke(Color.accentColor, lineWidth: 1)
                     )
                 }
             }
@@ -539,3 +546,4 @@ private struct ActionShareBox: View {
 #Preview {
     RestaurantView(restaurantId: "test-restaurant-123-address")
 }
+
