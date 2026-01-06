@@ -100,6 +100,18 @@ struct RestaurantView: View {
                                 )
                             }
                             .padding(.horizontal)
+                            
+                            if !vm.topTags.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    FlowLayout(spacing: 8, rowSpacing: 8) {
+                                        ForEach(vm.topTags, id: \.self) { tag in
+                                            SmallTagChip(text: tag)
+                                                .fixedSize()
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
                                 
                             HStack(alignment: .top, spacing: 12){
                                 if let address = restaurant.address, let city = restaurant.city, let state = restaurant.state, let zipCode = restaurant.zipCode, !address.isEmpty {
@@ -149,10 +161,7 @@ struct RestaurantView: View {
                             }
                             .padding(.horizontal)
                             
-                            //All tags users have used for restaurant
-                            HStack{
-                               
-                            }
+                       
                             
                             // Add sections (lists/reviews/likes) as needed
                             // ...
@@ -182,11 +191,9 @@ struct RestaurantView: View {
                 ActionOptionsSheet(
                     restaurant: restaurant,
                     onLike: {
-                        // TODO: Implement "Like" action
                         showActionsSheet = false
                     },
                     onReview: {
-                        // Navigate to review flow
                         showActionsSheet = false
                         showReviewSheet = true
                     },
@@ -539,6 +546,81 @@ private struct ActionShareBox: View {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(Color.textColor)
             )
+        }
+    }
+}
+
+// MARK: - Small tag chip (display only)
+private struct SmallTagChip: View {
+    let text: String
+    
+    var body: some View {
+        Text(text)
+            .font(.footnote.bold())
+            .foregroundColor(.accentColor)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .background(
+                Capsule().fill(Color.textColor.opacity(0.12))
+            )
+            .overlay(
+                Capsule().stroke(Color.accentColor.opacity(0.6), lineWidth: 1)
+            )
+    }
+}
+
+// MARK: - Simple FlowLayout for wrapping chips
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    var rowSpacing: CGFloat = 8
+    
+    init(spacing: CGFloat = 8, rowSpacing: CGFloat = 8) {
+        self.spacing = spacing
+        self.rowSpacing = rowSpacing
+    }
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        
+        for sub in subviews {
+            let size = sub.sizeThatFits(.unspecified)
+            if x > 0 && x + size.width > maxWidth {
+                // wrap
+                x = 0
+                y += rowHeight + rowSpacing
+                rowHeight = 0
+            }
+            rowHeight = max(rowHeight, size.height)
+            x += size.width + spacing
+        }
+        if subviews.isEmpty == false {
+            y += rowHeight
+        }
+        return CGSize(width: maxWidth, height: y)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var rowHeight: CGFloat = 0
+        
+        for sub in subviews {
+            let size = sub.sizeThatFits(.unspecified)
+            if x > bounds.minX && x + size.width > bounds.maxX {
+                // wrap
+                x = bounds.minX
+                y += rowHeight + rowSpacing
+                rowHeight = 0
+            }
+            sub.place(
+                at: CGPoint(x: x, y: y),
+                proposal: ProposedViewSize(width: size.width, height: size.height)
+            )
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
         }
     }
 }

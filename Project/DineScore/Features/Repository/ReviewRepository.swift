@@ -27,6 +27,9 @@ final class ReviewRepository{
         foodText: String?,
         serviceText: String?,
         visitedAt: Date?,
+        comeBack: ComeBackOption?,
+        priceValue: PriceValueOption?,
+        tags: [String]?,
         images: [UIImage]
     ) async throws -> String {
         
@@ -45,12 +48,17 @@ final class ReviewRepository{
             serviceText: serviceText,
             mediaURLS: nil,
             visitedAt: visitedAt,
+            comeBack: comeBack,
+            priceValue: priceValue,
+            tags: tags,
             createdAt: nil,
             updatedAt: nil
         )
         
         let baseData = try Firestore.Encoder().encode(base)
-        try await newRef.setData(baseData, merge: false)
+        var initialData = baseData
+        initialData["createdAt"] = FieldValue.serverTimestamp()
+        try await newRef.setData(initialData, merge: false)
         
         // 3) Upload images (if any)
         var urls: [String] = []
@@ -76,11 +84,16 @@ final class ReviewRepository{
     
     // Fetch recent reviews for a restaurant
     func fetchReviewsForRestaurant(_ restaurantId: String, limit: Int = 20) async throws -> [Review] {
-        let snap = try await reviews
-            .whereField("restaurantId", isEqualTo: restaurantId)
-            .order(by: "createdAt", descending: true)
-            .limit(to: limit)
-            .getDocuments()
+        let q: Query
+        if limit > 0 {
+            q = reviews
+                .whereField("restaurantId", isEqualTo: restaurantId)
+                .limit(to: limit)
+        } else {
+            q = reviews
+                .whereField("restaurantId", isEqualTo: restaurantId)
+        }
+        let snap = try await q.getDocuments()
         return try snap.documents.compactMap { doc in
             try doc.data(as: Review.self)
         }

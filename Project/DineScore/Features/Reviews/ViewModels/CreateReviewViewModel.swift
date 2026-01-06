@@ -16,11 +16,27 @@ final class CreateReviewViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage = ""
     
-    // Review form fields (extend as you add UI)
+    // Review form fields
     @Published var foodScore: Double? = nil
     @Published var serviceScore: Double? = nil
     @Published var foodText: String = ""
     @Published var serviceText: String = ""
+    
+    // Would you come back / Price vs value
+    @Published var comeBack: ComeBackOption = .maybe
+    @Published var priceValue: PriceValueOption = .okay
+    
+    // Tags
+    @Published var selectedTags: [String] = []
+    @Published var newTagText: String = ""
+    // You can load these from Firestore later; start with a static list
+    @Published var suggestedTags: [String] = [
+        "Friendly staff", "Fast service", "Slow service", "Great value", "Overpriced",
+        "Cozy", "Loud", "Romantic", "Family-friendly", "Great cocktails",
+        "Fresh ingredients", "Large portions", "Small portions", "Clean", "Crowded"
+    ]
+    let maxTags = 10
+    let maxTagLength = 24
     
     // Date visited
     @Published var visitDate: Date = Date()
@@ -70,13 +86,11 @@ final class CreateReviewViewModel: ObservableObject {
     
     // Decode up to 5 selected PhotosPickerItem values into UIImages
     func loadPickedPhotos() async {
-        // Enforce cap at selection time
         if selectedItems.count > maxPhotos {
             selectedItems = Array(selectedItems.prefix(maxPhotos))
         }
         guard !selectedItems.isEmpty else { return }
         
-        // Reset and decode fresh each time (or merge if you prefer)
         var images: [UIImage] = []
         for item in selectedItems.prefix(maxPhotos) {
             do {
@@ -85,25 +99,55 @@ final class CreateReviewViewModel: ObservableObject {
                     images.append(img)
                 }
             } catch {
-                // Skip bad items; collect what we can
                 print("Failed to load image from picker: \(error.localizedDescription)")
             }
         }
-        // Cap to maxPhotos in case more slipped through
         pickedImages = Array(images.prefix(maxPhotos))
     }
     
     func removeImage(at index: Int) {
         guard pickedImages.indices.contains(index) else { return }
         pickedImages.remove(at: index)
-        // Keep selectedItems roughly in sync (best-effort)
         if selectedItems.indices.contains(index) {
             selectedItems.remove(at: index)
         }
     }
     
+    // Tag helpers
+    func toggleSuggestedTag(_ tag: String) {
+        if selectedTags.contains(tag) {
+            selectedTags.removeAll { $0.caseInsensitiveCompare(tag) == .orderedSame }
+        } else {
+            addTag(tag)
+        }
+    }
+    
+    func addNewTag() {
+        let trimmed = newTagText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        addTag(trimmed)
+        newTagText = ""
+    }
+    
+    private func addTag(_ raw: String) {
+        guard selectedTags.count < maxTags else { return }
+        var tag = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if tag.count > maxTagLength {
+            tag = String(tag.prefix(maxTagLength))
+        }
+        // Normalize spaces
+        tag = tag.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        guard !tag.isEmpty else { return }
+        // Avoid duplicates (case-insensitive)
+        guard !selectedTags.contains(where: { $0.caseInsensitiveCompare(tag) == .orderedSame }) else { return }
+        selectedTags.append(tag)
+    }
+    
+    func removeTag(_ tag: String) {
+        selectedTags.removeAll { $0.caseInsensitiveCompare(tag) == .orderedSame }
+    }
+    
     var canPost: Bool {
-        // You can refine this to require scores/text as you add fields
         return !isUploading && !restaurantId.isEmpty && Auth.auth().currentUser?.uid != nil
     }
     
@@ -127,6 +171,9 @@ final class CreateReviewViewModel: ObservableObject {
                 foodText: foodText.isEmpty ? nil : foodText,
                 serviceText: serviceText.isEmpty ? nil : serviceText,
                 visitedAt: visitDate,
+                comeBack: comeBack,
+                priceValue: priceValue,
+                tags: selectedTags.isEmpty ? nil : selectedTags,
                 images: pickedImages
             )
             didPost = true
@@ -138,6 +185,10 @@ final class CreateReviewViewModel: ObservableObject {
             foodScore = nil
             serviceScore = nil
             visitDate = Date()
+            comeBack = .maybe
+            priceValue = .okay
+            selectedTags = []
+            newTagText = ""
         } catch {
             errorMessage = "Failed to post review: \(error.localizedDescription)"
         }
