@@ -5,6 +5,7 @@ struct RestaurantView: View {
     @State private var showActionsSheet = false
     @State private var showReviewSheet = false
     
+    
     init(restaurantId: String) {
         _vm = StateObject(wrappedValue: RestaurantViewModel(restaurantId: restaurantId))
     }
@@ -39,30 +40,30 @@ struct RestaurantView: View {
                             // Basic info
                             VStack(spacing: 6) {
                                 
+                                
+                                HStack() {
+                                    Text(restaurant.name)
+                                        .font(.title2).bold()
+                                        .foregroundColor(.accentColor)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .layoutPriority(1)
                                     
-                                    HStack() {
-                                        Text(restaurant.name)
-                                            .font(.title2).bold()
-                                            .foregroundColor(.accentColor)
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                            .layoutPriority(1)
-
-                                        if let cuisine = restaurant.cuisine, !cuisine.isEmpty {
-                                            Text(cuisine)
-                                                .font(.caption.weight(.semibold))
-                                                .foregroundColor(.backgroundColor)
-                                                .padding(.vertical, 4)
-                                                .padding(.horizontal, 8)
-                                                .background(
-                                                    Capsule().fill(Color.accentColor.opacity(0.85))
-                                                )
-                                                .fixedSize(horizontal: true, vertical: true)
-                                                .accessibilityLabel("Cuisine: \(cuisine)")
-                                        }
-
-                                        Spacer()
-
+                                    if let cuisine = restaurant.cuisine, !cuisine.isEmpty {
+                                        Text(cuisine)
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundColor(.backgroundColor)
+                                            .padding(.vertical, 4)
+                                            .padding(.horizontal, 8)
+                                            .background(
+                                                Capsule().fill(Color.accentColor.opacity(0.85))
+                                            )
+                                            .fixedSize(horizontal: true, vertical: true)
+                                            .accessibilityLabel("Cuisine: \(cuisine)")
+                                    }
+                                    
+                                    Spacer()
+                                    
                                     
                                     
                                     if let priceLevel = restaurant.priceLevel {
@@ -79,12 +80,12 @@ struct RestaurantView: View {
                                                 .foregroundColor(.accentColor)
                                                 .accessibilityLabel("Price level \(clamped) out of 5")
                                         }
-                                       
+                                        
                                     }
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.horizontal)
-                                }
+                            }
                             
                             HStack(spacing:12){
                                 InfoStatBox(
@@ -112,14 +113,14 @@ struct RestaurantView: View {
                                 }
                                 .padding(.horizontal)
                             }
-                                
+                            
                             HStack(alignment: .top, spacing: 12){
                                 if let address = restaurant.address, let city = restaurant.city, let state = restaurant.state, let zipCode = restaurant.zipCode, !address.isEmpty {
                                     AddressCard(address: address, city: city, state: state, zipCode: zipCode, name: restaurant.name)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 
-                              
+                                
                             }
                             .padding(.horizontal)
                             
@@ -161,7 +162,32 @@ struct RestaurantView: View {
                             }
                             .padding(.horizontal)
                             
-                       
+                            let foodAvg = vm.avgFoodScore ?? restaurant.avgFoodScore
+                            let serviceAvg = vm.avgServiceScore ?? restaurant.avgServiceScore
+
+                            if foodAvg != nil || serviceAvg != nil {
+                                HStack(spacing: 8) {
+                                    if let food = foodAvg {
+                                        Text("Food:")
+                                            .foregroundColor(.textColor)
+                                        Text(String(format: "%.1f" + "⭐️", food))
+                                            .font(.callout)
+                                            .foregroundColor(.accentColor)
+                                    }
+                                    if foodAvg != nil && serviceAvg != nil {
+                                        Text("·").foregroundColor(.accentColor).bold()
+                                    }
+                                    if let service = serviceAvg {
+                                        Text("Service:")
+                                            .foregroundColor(.textColor)
+                                        Text(String(format: "%.1f" + "⭐️", service))
+                                            .font(.callout)
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                            
                             
                             // Add sections (lists/reviews/likes) as needed
                             // ...
@@ -259,7 +285,7 @@ private struct InfoStatBox: View {
     let value: String? // optional so we can omit the value section entirely
     var showsChevron: Bool = false
     var action: (() -> Void)? = nil
-
+    
     
     @State private var isExpanded = false
     
@@ -325,13 +351,13 @@ private struct InfoStatBox: View {
                     )
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.textColor)
-        )
-        .contentShape(Rectangle())
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.textColor)
+            )
+            .contentShape(Rectangle())
         
         // Wrap in a button when an action is provided so the whole box is tappable
         if let action {
@@ -433,7 +459,7 @@ private struct ActionOptionsSheet: View {
     var onLike: () -> Void
     var onReview: () -> Void
     var onAddToList: () -> Void
-
+    
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {

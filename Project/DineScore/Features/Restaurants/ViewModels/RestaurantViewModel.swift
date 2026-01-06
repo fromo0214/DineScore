@@ -9,6 +9,8 @@ final class RestaurantViewModel: ObservableObject {
     @Published var topTags: [String] = []
     @Published var isLiked = false
     @Published var isLiking = false
+    @Published var avgFoodScore: Double?
+    @Published var avgServiceScore: Double?
 
     let restaurantId: String
 
@@ -69,6 +71,14 @@ final class RestaurantViewModel: ObservableObject {
     func loadTopTags(limit: Int? = nil, minCount: Int = 1) async {
         do {
             let reviews = try await reviewRepo.fetchReviewsForRestaurant(restaurantId, limit: 200)
+            
+            // Compute averages
+            let foodScores = reviews.compactMap { $0.foodScore }
+            avgFoodScore = foodScores.isEmpty ? nil : foodScores.reduce(0, +) / Double(foodScores.count)
+
+            let serviceScores = reviews.compactMap { $0.serviceScore }
+            avgServiceScore = serviceScores.isEmpty ? nil : serviceScores.reduce(0, +) / Double(serviceScores.count)
+            
             var counts: [String: Int] = [:]
             for r in reviews {
                 let tags = (r.tags ?? [])
@@ -93,6 +103,8 @@ final class RestaurantViewModel: ObservableObject {
         } catch {
             // Non-fatal; leave empty
             topTags = []
+            avgFoodScore = nil
+            avgServiceScore = nil
         }
     }
 

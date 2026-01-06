@@ -21,6 +21,9 @@ final class CreateReviewViewModel: ObservableObject {
     @Published var serviceScore: Double? = nil
     @Published var foodText: String = ""
     @Published var serviceText: String = ""
+    @Published var avgFoodScore: Double?
+    @Published var avgServiceScore: Double?
+
     
     // Would you come back / Price vs value
     @Published var comeBack: ComeBackOption = .maybe
@@ -71,6 +74,7 @@ final class CreateReviewViewModel: ObservableObject {
     }
     
     func load() async {
+        await loadAverageRatings()
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
@@ -127,6 +131,23 @@ final class CreateReviewViewModel: ObservableObject {
         guard !trimmed.isEmpty else { return }
         addTag(trimmed)
         newTagText = ""
+    }
+    
+    func loadAverageRatings() async {
+        do {
+            let reviews = try await reviewRepo.fetchReviewsForRestaurant(restaurantId)
+            
+            //Computes averages
+            let foodScores = reviews.compactMap { $0.foodScore }
+            avgFoodScore = foodScores.isEmpty ? nil : foodScores.reduce(0, +) / Double(foodScores.count)
+
+            let serviceScores = reviews.compactMap { $0.serviceScore }
+            avgServiceScore = serviceScores.isEmpty ? nil : serviceScores.reduce(0, +) / Double(serviceScores.count)
+            
+        }catch{
+            avgFoodScore = nil
+            avgServiceScore = nil
+        }
     }
     
     private func addTag(_ raw: String) {

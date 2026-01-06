@@ -132,17 +132,30 @@ private extension CreateReviewView {
                             .font(.callout)
                             .foregroundColor(.accentColor)
                         Text("·").foregroundColor(.accentColor).bold()
-                        Text("🍴")
-                        if let rating = restaurant.avgFoodScore {
-                            Text("\(String(format: "%.1f", rating))")
-                                .font(.callout)
-                                .foregroundColor(.accentColor)
-                        }
-                        Text("🤝")
-                        if let rating = restaurant.avgServiceScore {
-                            Text("\(String(format: "%.1f", rating))")
-                                .font(.callout)
-                                .foregroundColor(.accentColor)
+                        
+                        
+                        let foodAvg = vm.avgFoodScore ?? restaurant.avgFoodScore
+                        let serviceAvg = vm.avgServiceScore ?? restaurant.avgServiceScore
+
+                        if foodAvg != nil || serviceAvg != nil {
+                            HStack(spacing: 8) {
+                                if let food = foodAvg {
+                                    Text("🍴:")
+                                    Text(String(format: "%.1f" + "⭐️", food))
+                                        .font(.callout)
+                                        .foregroundColor(.accentColor)
+                                }
+                                if foodAvg != nil && serviceAvg != nil {
+                                    Text("·").foregroundColor(.accentColor).bold()
+                                }
+                                if let service = serviceAvg {
+                                    Text("🤝:")
+                                    Text(String(format: "%.1f" + "⭐️", service))
+                                        .font(.callout)
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+                            .padding(.horizontal)
                         }
                     }
                 }
