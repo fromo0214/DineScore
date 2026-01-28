@@ -15,6 +15,20 @@ struct SlideshowView: View {
     @State private var isVisible: Bool = false
     @StateObject private var locationManager = LocationManager()
     
+    //Computed property for location button text
+    private var locationButtonText: String {
+        switch locationManager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            return "Location Enabled"
+        case .denied, .restricted:
+            return "Location Denied"
+        case .notDetermined:
+            return "Enable Location Services"
+        @unknown default:
+            return "Enable Location Services"
+        }
+    }
+    
     //helper func to return sizes of each slide image
     private func imageSize(for index: Int) -> CGSize {
         switch index {
@@ -99,11 +113,18 @@ struct SlideshowView: View {
                                         Button(action: {
                                             locationManager.requestLocationPermission()
                                         }){
-                                            Text("Enable Location Services")
-                                                .opacity(isVisible ? 1: 0)
-                                                .scaleEffect(isVisible ? 1 : 0.8)
-                                                .animation(.easeOut(duration: 1.0), value: isVisible)
+                                            HStack {
+                                                Text(locationButtonText)
+                                                if locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .foregroundColor(.green)
+                                                }
+                                            }
+                                            .opacity(isVisible ? 1: 0)
+                                            .scaleEffect(isVisible ? 1 : 0.8)
+                                            .animation(.easeOut(duration: 1.0), value: isVisible)
                                         }
+                                        .disabled(locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways)
                                     } else if index == 4 {
                                         Button(action: {
                                             hasSeenSlideshow = true
