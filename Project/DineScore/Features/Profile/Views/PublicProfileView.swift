@@ -59,7 +59,8 @@ struct PublicProfileView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                 
-//                                FollowButton(targetUserId: user.id)
+                                FollowButton(viewModel: vm)
+                                    .padding(.top, 8)
                             }
                             .padding(.top, 20)
                             

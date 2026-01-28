@@ -38,7 +38,9 @@ struct UserRow: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
-            //FollowButton(targetUserId: user.id)
+            if let userId = user.id {
+                QuickFollowButton(targetUserId: userId)
+            }
         }
         .padding(.vertical, 6)
     }

@@ -232,4 +232,66 @@ final class AppUserRepository{
             return nil
         }
     }
+    
+    // MARK: - Follow/Unfollow helpers
+    
+    /// Follow a user: adds targetUserId to current user's following list and adds currentUserId to target's followers list
+    func followUser(currentUserId: String, targetUserId: String) async throws {
+        guard currentUserId != targetUserId else {
+            throw NSError(domain: "AppUserRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Cannot follow yourself"])
+        }
+        
+        let currentUserRef = users.document(currentUserId)
+        let targetUserRef = users.document(targetUserId)
+        
+        _ = try await db.runTransaction { transaction, errorPointer in
+            do {
+                // Add targetUserId to current user's following list
+                transaction.updateData([
+                    "following": FieldValue.arrayUnion([targetUserId])
+                ], forDocument: currentUserRef)
+                
+                // Add currentUserId to target user's followers list
+                transaction.updateData([
+                    "followers": FieldValue.arrayUnion([currentUserId])
+                ], forDocument: targetUserRef)
+            } catch let error as NSError {
+                errorPointer?.pointee = error
+                return nil
+            }
+            return nil
+        }
+    }
+    
+    /// Unfollow a user: removes targetUserId from current user's following list and removes currentUserId from target's followers list
+    func unfollowUser(currentUserId: String, targetUserId: String) async throws {
+        let currentUserRef = users.document(currentUserId)
+        let targetUserRef = users.document(targetUserId)
+        
+        _ = try await db.runTransaction { transaction, errorPointer in
+            do {
+                // Remove targetUserId from current user's following list
+                transaction.updateData([
+                    "following": FieldValue.arrayRemove([targetUserId])
+                ], forDocument: currentUserRef)
+                
+                // Remove currentUserId from target user's followers list
+                transaction.updateData([
+                    "followers": FieldValue.arrayRemove([currentUserId])
+                ], forDocument: targetUserRef)
+            } catch let error as NSError {
+                errorPointer?.pointee = error
+                return nil
+            }
+            return nil
+        }
+    }
+    
+    /// Check if current user is following target user
+    func isFollowing(currentUserId: String, targetUserId: String) async throws -> Bool {
+        let snapshot = try await users.document(currentUserId).getDocument()
+        guard snapshot.exists else { return false }
+        let following = (snapshot.get("following") as? [String]) ?? []
+        return following.contains(targetUserId)
+    }
 }
