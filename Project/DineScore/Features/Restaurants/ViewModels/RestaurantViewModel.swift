@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
+
 @MainActor
 final class RestaurantViewModel: ObservableObject {
     @Published var restaurant: RestaurantPublic?
@@ -11,6 +13,17 @@ final class RestaurantViewModel: ObservableObject {
     @Published var isLiking = false
     @Published var avgFoodScore: Double?
     @Published var avgServiceScore: Double?
+    @Published var reviews: [Review] = []
+    @Published var usersById: [String: UserPublic] = [:]
+
+    var recentTwoReviews: [Review] {
+        let sorted = reviews.sorted { lhs, rhs in
+            let l = lhs.createdAt?.dateValue() ?? Date.distantPast
+            let r = rhs.createdAt?.dateValue() ?? Date.distantPast
+            return l > r
+        }
+        return Array(sorted.prefix(2))
+    }
 
     let restaurantId: String
 
@@ -71,6 +84,7 @@ final class RestaurantViewModel: ObservableObject {
     func loadTopTags(limit: Int? = nil, minCount: Int = 1) async {
         do {
             let reviews = try await reviewRepo.fetchReviewsForRestaurant(restaurantId, limit: 200)
+            self.reviews = reviews
             
             // Compute averages
             let foodScores = reviews.compactMap { $0.foodScore }
@@ -100,11 +114,46 @@ final class RestaurantViewModel: ObservableObject {
             } else {
                 topTags = ranked
             }
+            await prefetchUsersForRecentReviews(limit: 2)
         } catch {
             // Non-fatal; leave empty
             topTags = []
             avgFoodScore = nil
             avgServiceScore = nil
+        }
+    }
+
+    func prefetchUsersForRecentReviews(limit: Int = 2) async {
+        // Sort reviews by createdAt desc and take top N userIds
+        let sorted = reviews.sorted { lhs, rhs in
+            let l = lhs.createdAt?.dateValue() ?? .distantPast
+            let r = rhs.createdAt?.dateValue() ?? .distantPast
+            return l > r
+        }
+        let ids = Array(Set(sorted.prefix(limit).map { $0.userId }))
+        guard !ids.isEmpty else { return }
+
+        // Fetch concurrently, skipping those we already have
+        let missing = ids.filter { usersById[$0] == nil }
+        guard !missing.isEmpty else { return }
+
+        await withTaskGroup(of: (String, UserPublic?).self) { group in
+            for id in missing {
+                group.addTask { [userRepo] in
+                    do {
+                        let user = try await userRepo.fetchUser(id: id)
+                        return (id, user)
+                    } catch {
+                        return (id, nil)
+                    }
+                }
+            }
+            var map: [String: UserPublic] = [:]
+            for await (id, user) in group {
+                if let user { map[id] = user }
+            }
+            // Merge into published dict
+            for (k, v) in map { usersById[k] = v }
         }
     }
 

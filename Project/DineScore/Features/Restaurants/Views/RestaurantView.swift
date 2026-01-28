@@ -1,5 +1,6 @@
 // Features/Profile/RestaurantView.swift
 import SwiftUI
+import FirebaseFirestore
 struct RestaurantView: View {
     @StateObject private var vm: RestaurantViewModel
     @State private var showActionsSheet = false
@@ -104,7 +105,7 @@ struct RestaurantView: View {
                             
                             if !vm.topTags.isEmpty {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    FlowLayout(spacing: 8, rowSpacing: 8) {
+                                    RestaurantFlowLayout(spacing: 8, rowSpacing: 8) {
                                         ForEach(vm.topTags, id: \.self) { tag in
                                             SmallTagChip(text: tag)
                                                 .fixedSize()
@@ -188,12 +189,22 @@ struct RestaurantView: View {
                                 .padding(.horizontal)
                             }
                             
+                            // Recent Reviews section (shows up to 2 most recent)
+                            if !vm.recentTwoReviews.isEmpty {
+                                RecentReviewsSection(reviews: vm.recentTwoReviews, restaurantId: vm.restaurantId)
+                                    .padding(.horizontal)
+                            } else if !vm.reviews.isEmpty {
+                                RecentReviewsSection(reviews: Array(vm.reviews.prefix(2)), restaurantId: vm.restaurantId)
+                                    .padding(.horizontal)
+                            }
+                            
                             
                             // Add sections (lists/reviews/likes) as needed
                             // ...
                             
                         }
                         .frame(maxWidth: .infinity)
+                        .environmentObject(vm)
                     }
                     // Present CreateReviewView using RestaurantPublic (no extra fetch)
                     .sheet(isPresented: $showReviewSheet) {
@@ -596,7 +607,7 @@ private struct SmallTagChip: View {
 }
 
 // MARK: - Simple FlowLayout for wrapping chips
-private struct FlowLayout: Layout {
+private struct RestaurantFlowLayout: Layout {
     var spacing: CGFloat = 8
     var rowSpacing: CGFloat = 8
     
@@ -647,6 +658,154 @@ private struct FlowLayout: Layout {
             )
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
+        }
+    }
+}
+
+// MARK: - Recent Reviews Section (horizontal & tappable)
+private struct RecentReviewsSection: View {
+    let reviews: [Review]
+    let restaurantId: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Reviews")
+                    .font(.headline)
+                    .foregroundColor(.accentColor)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundColor(.accentColor)
+                    .accessibilityHidden(true)
+            }
+
+            NavigationLink {
+                RestaurantReviewsView(restaurantId: restaurantId)
+            } label: {
+                HStack(spacing: 12) {
+                    ForEach(reviews.prefix(2)) { review in
+                        ReviewMiniCard(review: review)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.textColor.opacity(0.12))
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - Compact review card for the horizontal layout
+private struct ReviewMiniCard: View {
+    @EnvironmentObject private var vm: RestaurantViewModel
+    let review: Review
+
+    var body: some View {
+        let date = review.createdAt?.dateValue()
+        let food = review.foodScore
+        let service = review.serviceScore
+        let firstText = ([review.foodText, review.serviceText]
+            .compactMap { $0 }
+            .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) ?? ""
+        let avg: Double? = {
+            let scores = [food, service].compactMap { $0 }
+            guard !scores.isEmpty else { return nil }
+            return scores.reduce(0, +) / Double(scores.count)
+        }()
+
+        // Lookup user if we have it
+        let user = vm.usersById[review.userId]
+        let displayName = user?.displayNameShort ?? "Anonymous"
+        let avatarURL = user?.profilePicture.flatMap(URL.init(string:))
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
+                // Avatar
+                if let url = avatarURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img.resizable().scaledToFill()
+                        case .empty:
+                            Circle().fill(Color.gray.opacity(0.25))
+                        case .failure:
+                            Circle().fill(Color.gray.opacity(0.25))
+                        @unknown default:
+                            Circle().fill(Color.gray.opacity(0.25))
+                        }
+                    }
+                    .frame(width: 28, height: 28)
+                    .clipShape(Circle())
+                } else {
+                    Circle()
+                        .fill(Color.gray.opacity(0.25))
+                        .overlay(Text(initials(from: user)).font(.caption2.bold()).foregroundColor(.secondary))
+                        .frame(width: 28, height: 28)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(displayName)
+                        .font(.caption.bold())
+                        .foregroundColor(.accentColor)
+                    if let date {
+                        Text(relativeDateString(from: date))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Spacer()
+                if let avg {
+                    let clamped = max(0, min(avg, 5))
+                    let stars = String(repeating: "⭐️", count: Int(clamped.rounded()))
+                    Text(stars)
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                }
+            }
+
+            if !firstText.isEmpty {
+                Text(firstText)
+                    .font(.footnote)
+                    .foregroundColor(.textColor)
+                    .lineLimit(3)
+            }
+        }
+    }
+
+    private func initials(from user: UserPublic?) -> String {
+        guard let u = user else { return "" }
+        let f = u.firstName.first.map(String.init) ?? ""
+        let l = u.lastName.first.map(String.init) ?? ""
+        return (f + l).uppercased()
+    }
+    
+    private func relativeDateString(from date: Date) -> String {
+        let now = Date()
+        let seconds = max(0, now.timeIntervalSince(date))
+        let minute = 60.0
+        let hour = 60.0 * minute
+        let day = 24.0 * hour
+        if seconds < minute {
+            return "Just now"
+        } else if seconds < hour {
+            let m = Int(seconds / minute)
+            return "\(m)m ago"
+        } else if seconds < day {
+            let h = Int(seconds / hour)
+            return "\(h)h ago"
+        } else if seconds < 7 * day {
+            let d = Int(seconds / day)
+            return "\(d)d ago"
+        } else {
+            let df = DateFormatter()
+            df.dateStyle = .medium
+            df.timeStyle = .none
+            return df.string(from: date)
         }
     }
 }

@@ -379,7 +379,7 @@ private extension CreateReviewView {
             }
             
             if !vm.selectedTags.isEmpty {
-                FlowLayout(spacing: 8, rowSpacing: 8) {
+                ReviewFlowLayout(spacing: 8, rowSpacing: 8) {
                     ForEach(vm.selectedTags, id: \.self) { tag in
                         TagChip(
                             text: tag,
@@ -593,7 +593,7 @@ private struct TagChip: View {
 }
 
 // MARK: - Flow layout for wrapping chips
-private struct FlowLayout: Layout {
+private struct ReviewFlowLayout: Layout {
     var spacing: CGFloat = 8
     var rowSpacing: CGFloat = 8
     
