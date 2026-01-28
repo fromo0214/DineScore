@@ -27,11 +27,15 @@ final class UserProfileViewModel: ObservableObject{
 
     // New: detailed liked restaurants for UI (names, cover, etc.)
     @Published var likedRestaurantDetails: [RestaurantPublic] = []
+    
+    // New: recent activities
+    @Published var recentActivities: [UserActivity] = []
 
     private let db = Firestore.firestore()
     private let repo = AppUserRepository()
     private let uploader = ImageUploader()
     private let restaurantRepo = RestaurantRepository()
+    private let activityRepo = ActivityRepository()
     
     // Load liked restaurant IDs for a given uid
     func getLikedRestaurants(uid: String) async throws -> [String] {
@@ -233,6 +237,7 @@ final class UserProfileViewModel: ObservableObject{
             currentUser = nil
             likedRestaurants = []
             likedRestaurantDetails = []
+            recentActivities = []
             return
         }
         isLoading = true
@@ -249,13 +254,27 @@ final class UserProfileViewModel: ObservableObject{
                 Task { await self.refreshLikedRestaurantDetails() }
                 // Optionally refresh from server in background to ensure freshness
                 Task { await self.refreshLikedRestaurants() }
+                // Fetch recent activities
+                Task { await self.fetchRecentActivities(userId: uid) }
             }else{
                 print("User document not found")
                 self.likedRestaurants = []
                 self.likedRestaurantDetails = []
+                self.recentActivities = []
             }
         }catch{
             print("Failed to load user: \(error.localizedDescription)")
+        }
+    }
+    
+    // Fetch recent activities for a user
+    func fetchRecentActivities(userId: String) async {
+        do {
+            let activities = try await activityRepo.fetchRecentActivities(userId: userId, limit: 10)
+            self.recentActivities = activities
+        } catch {
+            print("Failed to fetch activities: \(error.localizedDescription)")
+            self.recentActivities = []
         }
     }
 }

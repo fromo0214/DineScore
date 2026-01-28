@@ -11,6 +11,8 @@ import FirebaseAuth
 
 final class AppUserRepository{
     private let db = Firestore.firestore()
+    private let activityRepo = ActivityRepository()
+    private let restaurantRepo = RestaurantRepository()
     
     //reference to the users collection in firestore
     private var users: CollectionReference { db.collection("users") }
@@ -128,11 +130,50 @@ final class AppUserRepository{
         try await users.document(uid).updateData([
             "likedRestaurants": FieldValue.arrayUnion([restaurantId])
         ])
+        
+        // Create activity for liking restaurant (non-critical, don't fail if this errors)
+        do {
+            let restaurant = try await restaurantRepo.fetchRestaurant(id: restaurantId)
+            try await activityRepo.createActivity(
+                userId: uid,
+                type: .likedRestaurant,
+                restaurantId: restaurantId,
+                restaurantName: restaurant?.name
+            )
+        } catch {
+            // Log the error but don't fail the entire operation
+            print("Warning: Failed to create activity for liking restaurant: \(error.localizedDescription)")
+        }
     }
     
     func unlikeRestaurant(uid: String, restaurantId: String) async throws {
         try await users.document(uid).updateData([
             "likedRestaurants": FieldValue.arrayRemove([restaurantId])
+        ])
+    }
+    
+    // MARK: - Review Likes helpers
+    func likeReview(uid: String, reviewId: String) async throws {
+        try await users.document(uid).updateData([
+            "likedReviews": FieldValue.arrayUnion([reviewId])
+        ])
+        
+        // Create activity for liking review (non-critical, don't fail if this errors)
+        do {
+            try await activityRepo.createActivity(
+                userId: uid,
+                type: .likedReview,
+                reviewId: reviewId
+            )
+        } catch {
+            // Log the error but don't fail the entire operation
+            print("Warning: Failed to create activity for liking review: \(error.localizedDescription)")
+        }
+    }
+    
+    func unlikeReview(uid: String, reviewId: String) async throws {
+        try await users.document(uid).updateData([
+            "likedReviews": FieldValue.arrayRemove([reviewId])
         ])
     }
 }

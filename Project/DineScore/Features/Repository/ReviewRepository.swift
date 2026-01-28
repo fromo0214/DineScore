@@ -13,6 +13,8 @@ import FirebaseFirestore
 final class ReviewRepository{
     private let db = Firestore.firestore()
     private let uploader = ImageUploader()
+    private let activityRepo = ActivityRepository()
+    private let restaurantRepo = RestaurantRepository()
     
     // Top-level "reviews" collection. Each doc stores restaurantId and userId fields.
     private var reviews: CollectionReference { db.collection("reviews") }
@@ -77,6 +79,21 @@ final class ReviewRepository{
             try await newRef.updateData([
                 "updatedAt": FieldValue.serverTimestamp()
             ])
+        }
+        
+        // 5) Create activity for creating review (non-critical, don't fail if this errors)
+        do {
+            let restaurant = try await restaurantRepo.fetchRestaurant(id: restaurantId)
+            try await activityRepo.createActivity(
+                userId: userId,
+                type: .createdReview,
+                restaurantId: restaurantId,
+                restaurantName: restaurant?.name,
+                reviewId: reviewId
+            )
+        } catch {
+            // Log the error but don't fail the entire operation
+            print("Warning: Failed to create activity for review creation: \(error.localizedDescription)")
         }
         
         return reviewId
