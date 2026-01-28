@@ -146,11 +146,8 @@ struct UserProfileContentView: View {
                         .bold()
                         .foregroundColor(.accentColor)
                     
-                    Text("More Activity")
-                        .padding()
-                        .font(.system(size: 20))
-                        .bold()
-                        .foregroundColor(.accentColor)
+                    UserActivityView(activities: vm.recentActivities)
+                        .padding(.horizontal)
                     
                 }
             }

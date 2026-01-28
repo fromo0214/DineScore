@@ -13,6 +13,8 @@ import FirebaseFirestore
 final class ReviewRepository{
     private let db = Firestore.firestore()
     private let uploader = ImageUploader()
+    private let activityRepo = ActivityRepository()
+    private let restaurantRepo = RestaurantRepository()
     
     // Top-level "reviews" collection. Each doc stores restaurantId and userId fields.
     private var reviews: CollectionReference { db.collection("reviews") }
@@ -78,6 +80,16 @@ final class ReviewRepository{
                 "updatedAt": FieldValue.serverTimestamp()
             ])
         }
+        
+        // 5) Create activity for creating review
+        let restaurant = try? await restaurantRepo.fetchRestaurant(id: restaurantId)
+        try await activityRepo.createActivity(
+            userId: userId,
+            type: .createdReview,
+            restaurantId: restaurantId,
+            restaurantName: restaurant?.name,
+            reviewId: reviewId
+        )
         
         return reviewId
     }

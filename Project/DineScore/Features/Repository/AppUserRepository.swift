@@ -11,6 +11,8 @@ import FirebaseAuth
 
 final class AppUserRepository{
     private let db = Firestore.firestore()
+    private let activityRepo = ActivityRepository()
+    private let restaurantRepo = RestaurantRepository()
     
     //reference to the users collection in firestore
     private var users: CollectionReference { db.collection("users") }
@@ -128,11 +130,40 @@ final class AppUserRepository{
         try await users.document(uid).updateData([
             "likedRestaurants": FieldValue.arrayUnion([restaurantId])
         ])
+        
+        // Create activity for liking restaurant
+        let restaurant = try? await restaurantRepo.fetchRestaurant(id: restaurantId)
+        try await activityRepo.createActivity(
+            userId: uid,
+            type: .likedRestaurant,
+            restaurantId: restaurantId,
+            restaurantName: restaurant?.name
+        )
     }
     
     func unlikeRestaurant(uid: String, restaurantId: String) async throws {
         try await users.document(uid).updateData([
             "likedRestaurants": FieldValue.arrayRemove([restaurantId])
+        ])
+    }
+    
+    // MARK: - Review Likes helpers
+    func likeReview(uid: String, reviewId: String) async throws {
+        try await users.document(uid).updateData([
+            "likedReviews": FieldValue.arrayUnion([reviewId])
+        ])
+        
+        // Create activity for liking review
+        try await activityRepo.createActivity(
+            userId: uid,
+            type: .likedReview,
+            reviewId: reviewId
+        )
+    }
+    
+    func unlikeReview(uid: String, reviewId: String) async throws {
+        try await users.document(uid).updateData([
+            "likedReviews": FieldValue.arrayRemove([reviewId])
         ])
     }
 }
