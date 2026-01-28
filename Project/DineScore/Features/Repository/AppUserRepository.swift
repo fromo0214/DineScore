@@ -131,14 +131,19 @@ final class AppUserRepository{
             "likedRestaurants": FieldValue.arrayUnion([restaurantId])
         ])
         
-        // Create activity for liking restaurant
-        let restaurant = try? await restaurantRepo.fetchRestaurant(id: restaurantId)
-        try await activityRepo.createActivity(
-            userId: uid,
-            type: .likedRestaurant,
-            restaurantId: restaurantId,
-            restaurantName: restaurant?.name
-        )
+        // Create activity for liking restaurant (non-critical, don't fail if this errors)
+        do {
+            let restaurant = try await restaurantRepo.fetchRestaurant(id: restaurantId)
+            try await activityRepo.createActivity(
+                userId: uid,
+                type: .likedRestaurant,
+                restaurantId: restaurantId,
+                restaurantName: restaurant?.name
+            )
+        } catch {
+            // Log the error but don't fail the entire operation
+            print("Warning: Failed to create activity for liking restaurant: \(error.localizedDescription)")
+        }
     }
     
     func unlikeRestaurant(uid: String, restaurantId: String) async throws {
@@ -153,12 +158,17 @@ final class AppUserRepository{
             "likedReviews": FieldValue.arrayUnion([reviewId])
         ])
         
-        // Create activity for liking review
-        try await activityRepo.createActivity(
-            userId: uid,
-            type: .likedReview,
-            reviewId: reviewId
-        )
+        // Create activity for liking review (non-critical, don't fail if this errors)
+        do {
+            try await activityRepo.createActivity(
+                userId: uid,
+                type: .likedReview,
+                reviewId: reviewId
+            )
+        } catch {
+            // Log the error but don't fail the entire operation
+            print("Warning: Failed to create activity for liking review: \(error.localizedDescription)")
+        }
     }
     
     func unlikeReview(uid: String, reviewId: String) async throws {

@@ -81,15 +81,20 @@ final class ReviewRepository{
             ])
         }
         
-        // 5) Create activity for creating review
-        let restaurant = try? await restaurantRepo.fetchRestaurant(id: restaurantId)
-        try await activityRepo.createActivity(
-            userId: userId,
-            type: .createdReview,
-            restaurantId: restaurantId,
-            restaurantName: restaurant?.name,
-            reviewId: reviewId
-        )
+        // 5) Create activity for creating review (non-critical, don't fail if this errors)
+        do {
+            let restaurant = try await restaurantRepo.fetchRestaurant(id: restaurantId)
+            try await activityRepo.createActivity(
+                userId: userId,
+                type: .createdReview,
+                restaurantId: restaurantId,
+                restaurantName: restaurant?.name,
+                reviewId: reviewId
+            )
+        } catch {
+            // Log the error but don't fail the entire operation
+            print("Warning: Failed to create activity for review creation: \(error.localizedDescription)")
+        }
         
         return reviewId
     }
