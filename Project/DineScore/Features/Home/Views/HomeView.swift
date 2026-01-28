@@ -37,7 +37,7 @@ struct HomeView: View {
                 }
             }
             
-            }.safeAreaInset(edge: .bottom) {
+            }.safeAreaInset(edge: .bottom, spacing: 12) {
                 //Navigation Bar
                 HStack {
                     navButton(icon: "house.fill", tab: .home)
@@ -51,7 +51,6 @@ struct HomeView: View {
                 .shadow(radius: 5)
                 .frame(width:350, height:50)
                 .frame(maxWidth: .infinity, alignment: .bottom)
-                .padding(.bottom, 25)
                 .background(Color.textColor)
             }
             
