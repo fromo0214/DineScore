@@ -50,8 +50,8 @@ struct Review: Identifiable, Codable{
     
     // New: tags users add to reviews
     var tags: [String]?
+    var likeCount: Int?
     
     @ServerTimestamp var createdAt: Timestamp?
     @ServerTimestamp var updatedAt: Timestamp?
 }
-

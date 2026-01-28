@@ -62,6 +62,10 @@ struct OrganizedReviewCard: View {
         let user = vm.usersById[review.userId]
         let displayName = user?.displayNameShort ?? "Anonymous"
         let avatarURL = user?.profilePicture.flatMap(URL.init(string:))
+        let reviewId = review.id ?? ""
+        let likeCount = review.likeCount ?? 0
+        let isLiked = vm.likedReviewIds.contains(reviewId)
+        let isLiking = vm.likingReviewIds.contains(reviewId)
         
         VStack(spacing: 16) {
             // Header section with user info and date
@@ -209,16 +213,22 @@ struct OrganizedReviewCard: View {
                 }
             }
             
-            // Like count (if available)
             HStack {
                 Spacer()
-                HStack(spacing: 6) {
-                    Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                    Text("0") // Replace with actual like count if available
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.primary)
+                Button {
+                    Task { await vm.toggleReviewLike(review) }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .foregroundColor(.red)
+                        Text("\(likeCount)")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.primary)
+                    }
                 }
+                .buttonStyle(.plain)
+                .disabled(reviewId.isEmpty || isLiking)
+                .opacity(isLiking ? 0.6 : 1.0)
             }
         }
         .padding(16)

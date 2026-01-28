@@ -1,4 +1,3 @@
-//
 //  AppUserRepository.swift
 //  DineScore
 //
@@ -16,6 +15,7 @@ final class AppUserRepository{
     
     //reference to the users collection in firestore
     private var users: CollectionReference { db.collection("users") }
+    private var reviews: CollectionReference { db.collection("reviews") }
     
     // Fetch a public user by id
     func fetchUser(id: String) async throws -> UserPublic? {
@@ -59,8 +59,45 @@ final class AppUserRepository{
         let ref = users.document(uid)
         let snap = try await ref.getDocument()
         guard snap.exists else { return nil }
-        // IMPORTANT: decode as AppUser.self (non-optional), not AppUser?.self
-        return try snap.data(as: AppUser.self)
+        return decodeAppUser(snapshot: snap)
+    }
+
+    private func decodeAppUser(snapshot: DocumentSnapshot) -> AppUser {
+        let data = snapshot.data() ?? [:]
+        let id = snapshot.documentID
+        let firstName = data["firstName"] as? String ?? ""
+        let lastName = data["lastName"] as? String ?? ""
+        let email = data["email"] as? String ?? ""
+        let profileImageURL = (data["profileImageURL"] as? String) ?? (data["profilePicture"] as? String)
+        let bio = data["bio"] as? String
+        let level = (data["level"] as? NSNumber)?.intValue ?? (data["level"] as? Int) ?? 1
+        let zipCode = data["zipCode"] as? String
+        let likedRestaurants = data["likedRestaurants"] as? [String] ?? []
+        let likedReviews = data["likedReviews"] as? [String] ?? []
+        let followers = data["followers"] as? [String] ?? []
+        let following = data["following"] as? [String] ?? []
+        let joinedDate = (data["joinedDate"] as? Timestamp)?.dateValue()
+            ?? (data["joinedDate"] as? Date)
+            ?? Date()
+        let lastLoginAt = (data["lastLoginAt"] as? Timestamp)?.dateValue()
+            ?? (data["lastLoginAt"] as? Date)
+
+        return AppUser(
+            id: id,
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            profileImageURL: profileImageURL,
+            bio: bio,
+            level: level,
+            zipCode: zipCode,
+            likedRestaurants: likedRestaurants,
+            likedReviews: likedReviews,
+            followers: followers,
+            following: following,
+            joinedDate: joinedDate,
+            lastLoginAt: lastLoginAt
+        )
     }
     
     //getter for likedRestaurants
@@ -70,6 +107,13 @@ final class AppUserRepository{
         guard snap.exists else { return [] }
         // Safely coerce to [String]; default to [] if missing or wrong type
         return (snap.get("likedRestaurants") as? [String]) ?? []
+    }
+
+    func getLikedReviews(uid: String) async throws -> [String] {
+        let ref = users.document(uid)
+        let snap = try await ref.getDocument()
+        guard snap.exists else { return [] }
+        return (snap.get("likedReviews") as? [String]) ?? []
     }
     
     //create a new user document
@@ -154,27 +198,38 @@ final class AppUserRepository{
     
     // MARK: - Review Likes helpers
     func likeReview(uid: String, reviewId: String) async throws {
-        try await users.document(uid).updateData([
-            "likedReviews": FieldValue.arrayUnion([reviewId])
-        ])
-        
-        // Create activity for liking review (non-critical, don't fail if this errors)
-        do {
-            try await activityRepo.createActivity(
-                userId: uid,
-                type: .likedReview,
-                reviewId: reviewId
-            )
-        } catch {
-            // Log the error but don't fail the entire operation
-            print("Warning: Failed to create activity for liking review: \(error.localizedDescription)")
+        try await updateReviewLike(uid: uid, reviewId: reviewId, shouldLike: true)
+    }
+
+    func unlikeReview(uid: String, reviewId: String) async throws {
+        try await updateReviewLike(uid: uid, reviewId: reviewId, shouldLike: false)
+    }
+
+    private func updateReviewLike(uid: String, reviewId: String, shouldLike: Bool) async throws {
+        let userRef = users.document(uid)
+        let reviewRef = reviews.document(reviewId)
+        _ = try await db.runTransaction { transaction, errorPointer in
+            do {
+                let userSnapshot = try transaction.getDocument(userRef)
+                let reviewSnapshot = try transaction.getDocument(reviewRef)
+                var liked = (userSnapshot.get("likedReviews") as? [String]) ?? []
+                var likeCount = (reviewSnapshot.get("likeCount") as? Int) ?? 0
+                if shouldLike {
+                    if !liked.contains(reviewId) {
+                        liked.append(reviewId)
+                        likeCount += 1
+                    }
+                } else if let index = liked.firstIndex(of: reviewId) {
+                    liked.remove(at: index)
+                    likeCount = max(0, likeCount - 1)
+                }
+                transaction.updateData(["likedReviews": liked], forDocument: userRef)
+                transaction.updateData(["likeCount": likeCount], forDocument: reviewRef)
+            } catch let error as NSError {
+                errorPointer?.pointee = error
+                return nil
+            }
+            return nil
         }
     }
-    
-    func unlikeReview(uid: String, reviewId: String) async throws {
-        try await users.document(uid).updateData([
-            "likedReviews": FieldValue.arrayRemove([reviewId])
-        ])
-    }
 }
-
