@@ -8,18 +8,23 @@
 import Foundation
 import CoreLocation
 import Combine
+import os.log
 
 @MainActor
 final class LocationManager: NSObject, ObservableObject {
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var lastLocation: CLLocation?
+    @Published var locationError: Error?
     
     private let locationManager = CLLocationManager()
+    private let logger = Logger(subsystem: "com.dinescore.app", category: "LocationManager")
     
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        // Use kCLLocationAccuracyHundredMeters for better battery efficiency
+        // This is sufficient for finding nearby restaurants
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         authorizationStatus = locationManager.authorizationStatus
     }
     
@@ -54,6 +59,9 @@ extension LocationManager: CLLocationManagerDelegate {
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location manager error: \(error.localizedDescription)")
+        Task { @MainActor in
+            locationError = error
+            logger.error("Location manager error: \(error.localizedDescription)")
+        }
     }
 }
