@@ -154,8 +154,8 @@ struct UserProfileContentView: View {
                     
                 }
             }
+            .padding(.top, 16)
             
         }
     }
 }
-
