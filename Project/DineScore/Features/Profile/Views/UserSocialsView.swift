@@ -54,18 +54,15 @@ struct UserSocialsView: View {
                     List{
                         ForEach(selectedTab == .followers ? followers : following, id: \.self) { userId in
                             HStack{
-                                
-                                Button(action: {
-                                    //visit profile logic
-                                    
-                                }){
+                                NavigationLink(destination: PublicProfileView(userId: userId)) {
                                     HStack{
-                                        //display user pfp
+                                        //display user icon
                                         Image(systemName: "person.circle.fill")
                                             .foregroundColor(Color.accentColor)
+                                            .font(.title2)
                                 
-                                        //display username
-                                        Text(userId)
+                                        //display user id
+                                        Text("User")
                                             .foregroundColor(Color.accentColor)
                                     }
                                 }
@@ -73,16 +70,15 @@ struct UserSocialsView: View {
                                 
                                 //remove/unfollow logic button
                                 Button(action: {
-                                    if selectedTab == .followers {
-                                        followers.removeAll { $0 == userId }
-                                    }else{
-                                        following.removeAll { $0 == userId }
+                                    Task {
+                                        await handleRemoveOrUnfollow(userId: userId)
                                     }
                                 }){
                                     Text(selectedTab == .followers ? "Remove" : "Unfollow")
                                         .foregroundColor(.red)
                                 }.buttonStyle(BorderlessButtonStyle())//doesn't extend button to full row
-                            }}
+                            }
+                        }
                     }.listRowBackground(Color.backgroundColor)
                     
                 }

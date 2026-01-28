@@ -12,7 +12,6 @@ struct QuickFollowButton: View {
     let targetUserId: String
     @State private var isFollowing = false
     @State private var isLoading = false
-    @State private var errorMessage = ""
     
     private let repo = AppUserRepository()
     
@@ -73,7 +72,7 @@ struct QuickFollowButton: View {
     
     private func toggleFollow() async {
         guard let currentUserId = Auth.auth().currentUser?.uid else {
-            errorMessage = "You must be logged in to follow users."
+            print("You must be logged in to follow users.")
             return
         }
         
@@ -95,8 +94,7 @@ struct QuickFollowButton: View {
                 isFollowing = true
             }
         } catch {
-            errorMessage = "Failed to update follow status: \(error.localizedDescription)"
-            print(errorMessage)
+            print("Failed to update follow status: \(error.localizedDescription)")
         }
     }
 }
