@@ -5,5 +5,7 @@
 	<key>Privacy - Local Notifications Usage Description</key>
 	<string>We use notifications to alert you about reviews, recommendations, and wait times.
 </string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>DineScore needs your location to show nearby restaurants and help you discover great places to eat.</string>
 </dict>
 </plist>

@@ -13,6 +13,7 @@ struct SlideshowView: View {
     @State private var currentIndex: Int = 0
     @State private var showHome: Bool = false
     @State private var isVisible: Bool = false
+    @StateObject private var locationManager = LocationManager()
     
     //helper func to return sizes of each slide image
     private func imageSize(for index: Int) -> CGSize {
@@ -96,8 +97,7 @@ struct SlideshowView: View {
                                 if slide.showButton{
                                     if index == 0 {
                                         Button(action: {
-                                            //add locations services function
-                                            
+                                            locationManager.requestLocationPermission()
                                         }){
                                             Text("Enable Location Services")
                                                 .opacity(isVisible ? 1: 0)
