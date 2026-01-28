@@ -37,9 +37,8 @@ struct HomeView: View {
                 }
             }
             
-            //Navigation Bar
-            VStack{
-                Spacer()
+            }.safeAreaInset(edge: .bottom) {
+                //Navigation Bar
                 HStack {
                     navButton(icon: "house.fill", tab: .home)
                     Spacer()
@@ -55,10 +54,7 @@ struct HomeView: View {
                 .padding(.bottom, 25)
                 .background(Color.textColor)
             }
-                
-                
-            }.ignoresSafeArea(edges: .bottom)
-           
+            
         
     }
     
