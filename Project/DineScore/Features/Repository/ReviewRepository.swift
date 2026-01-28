@@ -51,6 +51,7 @@ final class ReviewRepository{
             comeBack: comeBack,
             priceValue: priceValue,
             tags: tags,
+            likeCount: 0,
             createdAt: nil,
             updatedAt: nil
         )
@@ -110,5 +111,11 @@ final class ReviewRepository{
             try doc.data(as: Review.self)
         }
     }
-}
 
+    func fetchReview(id: String) async throws -> Review? {
+        let snap = try await reviews.document(id).getDocument()
+        guard snap.exists else { return nil }
+        return try snap.data(as: Review.self)
+    }
+
+}

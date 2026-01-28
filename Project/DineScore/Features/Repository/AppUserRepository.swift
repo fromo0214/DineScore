@@ -14,6 +14,7 @@ final class AppUserRepository{
     
     //reference to the users collection in firestore
     private var users: CollectionReference { db.collection("users") }
+    private var reviews: CollectionReference { db.collection("reviews") }
     
     // Fetch a public user by id
     func fetchUser(id: String) async throws -> UserPublic? {
@@ -68,6 +69,13 @@ final class AppUserRepository{
         guard snap.exists else { return [] }
         // Safely coerce to [String]; default to [] if missing or wrong type
         return (snap.get("likedRestaurants") as? [String]) ?? []
+    }
+
+    func getLikedReviews(uid: String) async throws -> [String] {
+        let ref = users.document(uid)
+        let snap = try await ref.getDocument()
+        guard snap.exists else { return [] }
+        return (snap.get("likedReviews") as? [String]) ?? []
     }
     
     //create a new user document
@@ -135,5 +143,40 @@ final class AppUserRepository{
             "likedRestaurants": FieldValue.arrayRemove([restaurantId])
         ])
     }
-}
 
+    func likeReview(uid: String, reviewId: String) async throws {
+        try await updateReviewLike(uid: uid, reviewId: reviewId, shouldLike: true)
+    }
+
+    func unlikeReview(uid: String, reviewId: String) async throws {
+        try await updateReviewLike(uid: uid, reviewId: reviewId, shouldLike: false)
+    }
+
+    private func updateReviewLike(uid: String, reviewId: String, shouldLike: Bool) async throws {
+        let userRef = users.document(uid)
+        let reviewRef = reviews.document(reviewId)
+        try await db.runTransaction { transaction, errorPointer in
+            do {
+                let userSnapshot = try transaction.getDocument(userRef)
+                let reviewSnapshot = try transaction.getDocument(reviewRef)
+                var liked = (userSnapshot.get("likedReviews") as? [String]) ?? []
+                var likeCount = (reviewSnapshot.get("likeCount") as? Int) ?? 0
+                if shouldLike {
+                    if !liked.contains(reviewId) {
+                        liked.append(reviewId)
+                        likeCount += 1
+                    }
+                } else if let index = liked.firstIndex(of: reviewId) {
+                    liked.remove(at: index)
+                    likeCount = max(0, likeCount - 1)
+                }
+                transaction.updateData(["likedReviews": liked], forDocument: userRef)
+                transaction.updateData(["likeCount": likeCount], forDocument: reviewRef)
+            } catch let error as NSError {
+                errorPointer?.pointee = error
+                return nil
+            }
+            return nil
+        }
+    }
+}

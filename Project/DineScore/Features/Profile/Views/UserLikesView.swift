@@ -28,9 +28,6 @@ struct UserLikesView: View {
         var id: String { self.rawValue }
     }
     
-    // Placeholder until you add real liked reviews support
-    @State private var reviews: [String] = ["Review 1", "Review 2", "Review 3"]
-    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .topLeading) {
@@ -86,20 +83,39 @@ struct UserLikesView: View {
                                 }
                             }
                         } else {
-                            ForEach(reviews, id: \.self) { item in
+                            ForEach(vm.likedReviewDetails) { review in
                                 HStack {
-                                    // Photo icon for reviews for now (replace with AsyncImage when you have imageURL)
-                                    Image(systemName: "person.fill")
+                                    Image(systemName: "star.bubble.fill")
                                         .foregroundColor(Color.accentColor)
                                     
-                                    Text(item)
-                                        .foregroundColor(Color.accentColor)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(reviewSummary(review))
+                                            .foregroundColor(Color.accentColor)
+                                            .lineLimit(1)
+                                        if let date = review.createdAt?.dateValue() {
+                                            Text(formatDate(date))
+                                                .foregroundColor(Color.accentColor)
+                                                .font(.caption.bold())
+                                        }
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    let likeCount = review.likeCount ?? 0
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "heart.fill")
+                                            .foregroundColor(.red)
+                                        Text("\(likeCount)")
+                                            .foregroundColor(Color.accentColor)
+                                            .font(.caption.bold())
+                                    }
                                     
                                     Spacer()
                                     
                                     Button(action: {
-                                        // Remove liked review when you implement reviews
-                                        reviews.removeAll { $0 == item }
+                                        if let reviewId = review.id {
+                                            Task { await vm.unlikeReview(reviewId) }
+                                        }
                                     }) {
                                         Image(systemName: "heart.fill")
                                             .foregroundColor(.red)
@@ -144,6 +160,8 @@ struct UserLikesView: View {
             await vm.getAppUser()
             await vm.refreshLikedRestaurants()
             await vm.refreshLikedRestaurantDetails()
+            await vm.refreshLikedReviews()
+            await vm.refreshLikedReviewDetails()
         }
     }
     
@@ -156,5 +174,22 @@ struct UserLikesView: View {
         default:             return ""
         }
     }
-}
 
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: date)
+    }
+
+    private func reviewSummary(_ review: Review) -> String {
+        if let text = review.foodText?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !text.isEmpty {
+            return text
+        }
+        if let text = review.serviceText?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !text.isEmpty {
+            return text
+        }
+        return "Review"
+    }
+}

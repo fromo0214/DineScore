@@ -5,6 +5,7 @@
 //  Created by Fernando Romo on 1/20/26.
 //
 import Foundation
+import FirebaseAuth
 
 @MainActor
 final class RestaurantReviewsViewModel: ObservableObject {
@@ -12,6 +13,8 @@ final class RestaurantReviewsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var usersById: [String: UserPublic] = [:]
+    @Published var likedReviewIds: Set<String> = []
+    @Published var likingReviewIds: Set<String> = []
 
     
     private let reviewRepo = ReviewRepository()
@@ -30,6 +33,7 @@ final class RestaurantReviewsViewModel: ObservableObject {
             
             // After loading reviews, fetch user data
             await loadUsersForReviews()
+            await refreshLikedReviews()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -58,6 +62,63 @@ final class RestaurantReviewsViewModel: ObservableObject {
                 if let user = user {
                     usersById[userId] = user
                 }
+            }
+        }
+    }
+
+    func refreshLikedReviews() async {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            likedReviewIds = []
+            return
+        }
+        do {
+            let liked = try await userRepo.getLikedReviews(uid: uid)
+            likedReviewIds = Set(liked)
+        } catch {
+            likedReviewIds = []
+        }
+    }
+
+    func toggleReviewLike(_ review: Review) async {
+        guard let reviewId = review.id, !reviewId.isEmpty else { return }
+        guard let uid = Auth.auth().currentUser?.uid else {
+            errorMessage = "Sign in to like reviews."
+            return
+        }
+        guard !likingReviewIds.contains(reviewId) else { return }
+        likingReviewIds.insert(reviewId)
+        defer { likingReviewIds.remove(reviewId) }
+        let originalLiked = likedReviewIds.contains(reviewId)
+        let originalCount = review.likeCount ?? 0
+        do {
+            if originalLiked {
+                try await userRepo.unlikeReview(uid: uid, reviewId: reviewId)
+                likedReviewIds.remove(reviewId)
+            } else {
+                try await userRepo.likeReview(uid: uid, reviewId: reviewId)
+                likedReviewIds.insert(reviewId)
+            }
+            await refreshLikeCount(reviewId: reviewId, fallbackCount: originalCount)
+        } catch {
+            errorMessage = "Failed to update like: \(error.localizedDescription)"
+            if originalLiked {
+                likedReviewIds.insert(reviewId)
+            } else {
+                likedReviewIds.remove(reviewId)
+            }
+            await refreshLikeCount(reviewId: reviewId, fallbackCount: originalCount)
+        }
+    }
+
+    private func refreshLikeCount(reviewId: String, fallbackCount: Int) async {
+        do {
+            if let review = try await reviewRepo.fetchReview(id: reviewId),
+               let index = reviews.firstIndex(where: { $0.id == reviewId }) {
+                reviews[index].likeCount = review.likeCount ?? fallbackCount
+            }
+        } catch {
+            if let index = reviews.firstIndex(where: { $0.id == reviewId }) {
+                reviews[index].likeCount = fallbackCount
             }
         }
     }
