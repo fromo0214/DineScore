@@ -51,7 +51,8 @@ struct HomeView: View {
                 .shadow(radius: 5)
                 .frame(width:350, height:50)
                 .frame(maxWidth: .infinity, alignment: .bottom)
-                .padding(.bottom, 25)
+                .padding(.top, 12)
+                .padding(.bottom, 12)
                 .background(Color.textColor)
             }
             
