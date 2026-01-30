@@ -13,8 +13,35 @@ struct SlideshowView: View {
     @State private var currentIndex: Int = 0
     @State private var showHome: Bool = false
     @State private var isVisible: Bool = false
+    @StateObject private var locationManager = LocationManager()
     
-    //helper func to return sizes of each slide image
+    // Computed property for location button text
+    private var locationButtonText: String {
+        switch locationManager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            return "Location Enabled"
+        case .denied, .restricted:
+            return "Location Denied"
+        case .notDetermined:
+            return "Enable Location Services"
+        @unknown default:
+            return "Enable Location Services"
+        }
+    }
+    
+    // Computed property to check if location is authorized
+    private var isLocationAuthorized: Bool {
+        locationManager.authorizationStatus == .authorizedWhenInUse || 
+        locationManager.authorizationStatus == .authorizedAlways
+    }
+    
+    // Computed property to check if location is denied or restricted
+    private var isLocationDeniedOrRestricted: Bool {
+        locationManager.authorizationStatus == .denied || 
+        locationManager.authorizationStatus == .restricted
+    }
+    
+    // helper func to return sizes of each slide image
     private func imageSize(for index: Int) -> CGSize {
         switch index {
         case 0:
@@ -92,18 +119,31 @@ struct SlideshowView: View {
 //                                    .padding(.bottom, 100)
                                 
                         
-                                //display slideshow button if exists
+                                // display slideshow button if exists
                                 if slide.showButton{
                                     if index == 0 {
                                         Button(action: {
-                                            //add locations services function
-                                            
+                                            if isLocationDeniedOrRestricted {
+                                                // Open Settings if permission was denied
+                                                if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                                                    UIApplication.shared.open(settingsUrl)
+                                                }
+                                            } else {
+                                                locationManager.requestLocationPermission()
+                                            }
                                         }){
-                                            Text("Enable Location Services")
-                                                .opacity(isVisible ? 1: 0)
-                                                .scaleEffect(isVisible ? 1 : 0.8)
-                                                .animation(.easeOut(duration: 1.0), value: isVisible)
+                                            HStack {
+                                                Text(locationButtonText)
+                                                if isLocationAuthorized {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .foregroundColor(.green)
+                                                }
+                                            }
+                                            .opacity(isVisible ? 1: 0)
+                                            .scaleEffect(isVisible ? 1 : 0.8)
+                                            .animation(.easeOut(duration: 1.0), value: isVisible)
                                         }
+                                        .disabled(isLocationAuthorized)
                                     } else if index == 4 {
                                         Button(action: {
                                             hasSeenSlideshow = true
