@@ -54,4 +54,40 @@ struct Review: Identifiable, Codable{
     
     @ServerTimestamp var createdAt: Timestamp?
     @ServerTimestamp var updatedAt: Timestamp?
+
+    static let detailCompletionMaxScore = 9
+    static let detailCompletionThreshold = 5
+
+    var detailCompletionScore: Int {
+        var score = 0
+        if foodScore != nil { score += 1 }
+        if serviceScore != nil { score += 1 }
+        if let text = foodText?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty { score += 1 }
+        if let text = serviceText?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty { score += 1 }
+        if let tags, !tags.isEmpty { score += 1 }
+        if let mediaURLS, !mediaURLS.isEmpty { score += 1 }
+        if comeBack != nil { score += 1 }
+        if priceValue != nil { score += 1 }
+        if visitedAt != nil { score += 1 }
+        return score
+    }
+
+    var detailCompletionRatio: Double {
+        guard Review.detailCompletionMaxScore > 0 else { return 0 }
+        return Double(detailCompletionScore) / Double(Review.detailCompletionMaxScore)
+    }
+
+    var isDetailComplete: Bool {
+        detailCompletionScore >= Review.detailCompletionThreshold
+    }
+
+    var hasFoodNotes: Bool {
+        let text = foodText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !text.isEmpty
+    }
+
+    var hasServiceNotes: Bool {
+        let text = serviceText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !text.isEmpty
+    }
 }

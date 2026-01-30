@@ -86,10 +86,18 @@ struct UserProfileContentView: View {
                                 .foregroundColor(.green)
                         }
                         
-                        
-                        Text("Taster 🍴")
-                            .bold()
-                            .foregroundColor(Color.textColor)
+                        if let reviewerLevel = vm.reviewerLevel {
+                            Text(reviewerLevel.badge.rawValue)
+                                .bold()
+                                .foregroundColor(Color.textColor)
+                            Text("Level \(reviewerLevel.level)")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Taster 🍴")
+                                .bold()
+                                .foregroundColor(Color.textColor)
+                        }
                         Rectangle()
                             .frame(width:100, height: 5)
                             .foregroundColor(Color.accentColor)

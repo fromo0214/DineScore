@@ -27,8 +27,7 @@ struct UserAccountSettingsView: View {
                     List{
                         
                         settingsButton(title: "View Level & Badges"){
-                            //dislay level/badges view
-                            
+                            showLevelBadgesView = true
                         }
                         
                         settingsButton(title: "Sign Out"){
@@ -48,6 +47,9 @@ struct UserAccountSettingsView: View {
             Button ("Sign Out", role: .destructive){
                 signOut()
             }
+        }
+        .navigationDestination(isPresented: $showLevelBadgesView) {
+            ReviewerLevelBadgesView()
         }
         .navigationBarBackButtonHidden(true)
             .navigationTitle("")
@@ -111,4 +113,3 @@ struct UserAccountSettingsView: View {
     }
     
 }
-

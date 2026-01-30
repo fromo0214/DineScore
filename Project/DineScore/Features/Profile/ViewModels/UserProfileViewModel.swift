@@ -32,6 +32,8 @@ final class UserProfileViewModel: ObservableObject{
     // New: recent activities
     @Published var recentActivities: [UserActivity] = []
     @Published var likedReviewDetails: [Review] = []
+    @Published var myReviews: [Review] = []
+    @Published var reviewerLevel: ReviewerLevel?
 
     private let db = Firestore.firestore()
     private let repo = AppUserRepository()
@@ -133,6 +135,23 @@ final class UserProfileViewModel: ObservableObject{
             }
         }
         likedReviewDetails = details
+    }
+
+    func refreshMyReviews() async {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            myReviews = []
+            reviewerLevel = nil
+            return
+        }
+        do {
+            let reviews = try await reviewRepo.fetchReviewsByUser(uid, limit: 100)
+            myReviews = reviews
+            reviewerLevel = ReviewerLevelCalculator.level(from: reviews)
+        } catch {
+            errorMessage = "Failed to load reviews: \(error.localizedDescription)"
+            myReviews = []
+            reviewerLevel = nil
+        }
     }
     
     // Add a like for current user and update local state
@@ -318,6 +337,8 @@ final class UserProfileViewModel: ObservableObject{
             recentActivities = []
 
             likedReviewDetails = []
+            myReviews = []
+            reviewerLevel = nil
             return
         }
         isLoading = true
@@ -335,6 +356,7 @@ final class UserProfileViewModel: ObservableObject{
                 // Fetch recent activities
                 Task { await self.fetchRecentActivities(userId: uid) }
                 Task { await self.refreshLikedReviewDetails() }
+                Task { await self.refreshMyReviews() }
             } else {
                 errorMessage = "User document not found."
                 likedRestaurants = []
@@ -342,6 +364,8 @@ final class UserProfileViewModel: ObservableObject{
                 likedRestaurantDetails = []
                 recentActivities = []
                 likedReviewDetails = []
+                myReviews = []
+                reviewerLevel = nil
             }
         } catch {
             errorMessage = "Failed to load user: \(error.localizedDescription)"

@@ -92,8 +92,7 @@ struct OrganizedReviewCard: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    // User badge (e.g., "Flavor Hunter 😋")
-                    if let badge = getUserBadge(for: user) {
+                    if let badge = vm.badgeLabel(for: review.userId) {
                         Text(badge)
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
@@ -250,22 +249,6 @@ struct OrganizedReviewCard: View {
         let f = u.firstName.first.map(String.init) ?? ""
         let l = u.lastName.first.map(String.init) ?? ""
         return (f + l).uppercased()
-    }
-    
-    private func getUserBadge(for user: UserPublic?) -> String? {
-        // You can customize this based on user level, review count, etc.
-        // For now, returning sample badges
-        guard let user = user else { return nil }
-        
-        // Example logic - customize based on your app's badge system
-        let reviewCount = vm.reviews.filter { $0.userId == user.id }.count
-        
-        if reviewCount >= 10 {
-            return "Flavor Hunter 😋"
-        } else if reviewCount >= 5 {
-            return "Taster 🍴"
-        }
-        return nil
     }
     
     private func formatDate(_ date: Date) -> String {
