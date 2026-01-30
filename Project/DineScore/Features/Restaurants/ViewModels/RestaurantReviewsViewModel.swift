@@ -19,6 +19,7 @@ final class RestaurantReviewsViewModel: ObservableObject {
     
     private let reviewRepo = ReviewRepository()
     private let userRepo = AppUserRepository() // Add this
+    @Published private var reviewerLevels: [String: ReviewerLevel] = [:]
 
     func loadReviews(for restaurantId: String) async {
         isLoading = true
@@ -32,6 +33,7 @@ final class RestaurantReviewsViewModel: ObservableObject {
             }
             
             // After loading reviews, fetch user data
+            await loadReviewerLevels()
             await loadUsersForReviews()
             await refreshLikedReviews()
         } catch {
@@ -133,5 +135,36 @@ final class RestaurantReviewsViewModel: ObservableObject {
         let serviceScores = reviews.compactMap { $0.serviceScore }
         guard !serviceScores.isEmpty else { return 0.0 }
         return serviceScores.reduce(0, +) / Double(serviceScores.count)
+    }
+
+    func badgeLabel(for userId: String) -> String? {
+        reviewerLevels[userId]?.badge.rawValue
+    }
+
+    private func loadReviewerLevels() async {
+        let userIds = Set(reviews.map { $0.userId })
+        guard !userIds.isEmpty else {
+            reviewerLevels = [:]
+            return
+        }
+        var levels: [String: ReviewerLevel] = [:]
+        await withTaskGroup(of: (String, ReviewerLevel?).self) { group in
+            for userId in userIds {
+                group.addTask { [reviewRepo] in
+                    do {
+                        let userReviews = try await reviewRepo.fetchReviewsByUser(userId, limit: 200)
+                        return (userId, ReviewerLevelCalculator.level(from: userReviews))
+                    } catch {
+                        return (userId, nil)
+                    }
+                }
+            }
+            for await (userId, level) in group {
+                if let level {
+                    levels[userId] = level
+                }
+            }
+        }
+        reviewerLevels = levels
     }
 }
