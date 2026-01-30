@@ -1,11 +1,14 @@
 // Features/Profile/PublicProfileViewModel.swift
 import Foundation
+import FirebaseAuth
 
 @MainActor
 final class PublicProfileViewModel: ObservableObject {
     @Published var user: UserPublic?
     @Published var isLoading = false
     @Published var errorMessage = ""
+    @Published var isFollowing = false
+    @Published var isFollowActionInProgress = false
     
     private let repo = AppUserRepository()
     let userId: String
@@ -23,9 +26,63 @@ final class PublicProfileViewModel: ObservableObject {
             if let urlStr = user?.profilePicture {
                 prefetch(urlString: urlStr)
             }
-            if user == nil { errorMessage = "User not found." }
+            if user == nil { 
+                errorMessage = "User not found." 
+            } else {
+                // Check if current user is following this profile
+                await checkFollowingStatus()
+            }
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+    
+    func checkFollowingStatus() async {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            isFollowing = false
+            return
+        }
+        
+        // Don't check if viewing own profile
+        guard currentUserId != userId else {
+            isFollowing = false
+            return
+        }
+        
+        do {
+            isFollowing = try await repo.isFollowing(currentUserId: currentUserId, targetUserId: userId)
+        } catch {
+            print("Error checking following status: \(error.localizedDescription)")
+            isFollowing = false
+        }
+    }
+    
+    func toggleFollow() async {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            errorMessage = "You must be logged in to follow users."
+            return
+        }
+        
+        guard currentUserId != userId else {
+            errorMessage = "You cannot follow yourself."
+            return
+        }
+        
+        guard !isFollowActionInProgress else { return }
+        
+        isFollowActionInProgress = true
+        defer { isFollowActionInProgress = false }
+        
+        do {
+            if isFollowing {
+                try await repo.unfollowUser(currentUserId: currentUserId, targetUserId: userId)
+                isFollowing = false
+            } else {
+                try await repo.followUser(currentUserId: currentUserId, targetUserId: userId)
+                isFollowing = true
+            }
+        } catch {
+            errorMessage = "Failed to update follow status: \(error.localizedDescription)"
         }
     }
     

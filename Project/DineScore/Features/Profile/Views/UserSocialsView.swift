@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct UserSocialsView: View {
     let currentUser: AppUser
@@ -29,10 +30,9 @@ struct UserSocialsView: View {
         var id: String { self.rawValue }
     }
     
-    // hardcode — replace with Firebase user data
-    //show pfp, username
     @State private var followers: [String] = []
     @State private var following: [String] = []
+    private let repo = AppUserRepository()
 
     
     var body: some View {
@@ -54,18 +54,15 @@ struct UserSocialsView: View {
                     List{
                         ForEach(selectedTab == .followers ? followers : following, id: \.self) { userId in
                             HStack{
-                                
-                                Button(action: {
-                                    //visit profile logic
-                                    
-                                }){
+                                NavigationLink(destination: PublicProfileView(userId: userId)) {
                                     HStack{
-                                        //display user pfp
+                                        //display user icon
                                         Image(systemName: "person.circle.fill")
                                             .foregroundColor(Color.accentColor)
+                                            .font(.title2)
                                 
-                                        //display username
-                                        Text(userId)
+                                        //display user id
+                                        Text("User")
                                             .foregroundColor(Color.accentColor)
                                     }
                                 }
@@ -73,16 +70,15 @@ struct UserSocialsView: View {
                                 
                                 //remove/unfollow logic button
                                 Button(action: {
-                                    if selectedTab == .followers {
-                                        followers.removeAll { $0 == userId }
-                                    }else{
-                                        following.removeAll { $0 == userId }
+                                    Task {
+                                        await handleRemoveOrUnfollow(userId: userId)
                                     }
                                 }){
                                     Text(selectedTab == .followers ? "Remove" : "Unfollow")
                                         .foregroundColor(.red)
                                 }.buttonStyle(BorderlessButtonStyle())//doesn't extend button to full row
-                            }}
+                            }
+                        }
                     }.listRowBackground(Color.backgroundColor)
                     
                 }
@@ -113,6 +109,25 @@ struct UserSocialsView: View {
                         }
                     }
                 }
+        }
+    }
+    
+    private func handleRemoveOrUnfollow(userId: String) async {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        do {
+            if selectedTab == .followers {
+                // Remove this user from followers (they unfollow us)
+                // This means we unfollow them from their perspective
+                try await repo.unfollowUser(currentUserId: userId, targetUserId: currentUserId)
+                followers.removeAll { $0 == userId }
+            } else {
+                // Unfollow this user
+                try await repo.unfollowUser(currentUserId: currentUserId, targetUserId: userId)
+                following.removeAll { $0 == userId }
+            }
+        } catch {
+            print("Error removing/unfollowing user: \(error.localizedDescription)")
         }
     }
 }
