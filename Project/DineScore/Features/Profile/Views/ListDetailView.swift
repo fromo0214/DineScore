@@ -52,8 +52,10 @@ struct ListDetailView: View {
                 } else {
                     List {
                         ForEach(restaurants) { restaurant in
-                            NavigationLink(destination: RestaurantView(restaurantId: restaurant.id!)) {
-                                RestaurantRow(restaurant: restaurant)
+                            if let restaurantId = restaurant.id {
+                                NavigationLink(destination: RestaurantView(restaurantId: restaurantId)) {
+                                    RestaurantRow(restaurant: restaurant)
+                                }
                             }
                         }
                         .onDelete(perform: removeRestaurant)
