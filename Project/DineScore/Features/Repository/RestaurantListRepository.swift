@@ -41,7 +41,9 @@ final class RestaurantListRepository {
     
     // Update a list
     func updateList(_ list: RestaurantList) async throws {
-        guard let id = list.id else { throw NSError(domain: "RestaurantList", code: -1) }
+        guard let id = list.id else { 
+            throw NSError(domain: "RestaurantList", code: -1, userInfo: [NSLocalizedDescriptionKey: "List ID is missing"])
+        }
         try lists.document(id).setData(from: list, merge: true)
     }
     
