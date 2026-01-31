@@ -5,6 +5,7 @@ struct RestaurantView: View {
     @StateObject private var vm: RestaurantViewModel
     @State private var showActionsSheet = false
     @State private var showReviewSheet = false
+    @State private var showAddToListSheet = false
     
     
     init(restaurantId: String) {
@@ -125,41 +126,51 @@ struct RestaurantView: View {
                             }
                             .padding(.horizontal)
                             
-                            // Action row: Like / Review / Share styled like InfoStatBox
-                            HStack(spacing: 12) {
-                                ActionStatButton(
-                                    title: vm.isLiked ? "Unlike" : "Like",
-                                    systemImage: vm.isLiked ? "heart.fill" : "heart"
-                                ) {
-                                    // TODO: Implement direct like action.
-                                    Task { await vm.toggleLike() }
+                            // Action row: Like / Review / Add to List / Share styled like InfoStatBox
+                            VStack(spacing: 12) {
+                                HStack(spacing: 12) {
+                                    ActionStatButton(
+                                        title: vm.isLiked ? "Unlike" : "Like",
+                                        systemImage: vm.isLiked ? "heart.fill" : "heart"
+                                    ) {
+                                        Task { await vm.toggleLike() }
+                                    }
+                                    .disabled(vm.isLiking)
+                                    .opacity(vm.isLiking ? 0.6 : 1.0)
+                                    
+                                    ActionStatButton(
+                                        title: "Review",
+                                        systemImage: "square.and.pencil"
+                                    ) {
+                                        // Present CreateReviewView with the already-loaded restaurant
+                                        showReviewSheet = true
+                                    }
                                 }
-                                .disabled(vm.isLiking)
-                                .opacity(vm.isLiking ? 0.6 : 1.0)
                                 
-                                ActionStatButton(
-                                    title: "Review",
-                                    systemImage: "square.and.pencil"
-                                ) {
-                                    // Present CreateReviewView with the already-loaded restaurant
-                                    showReviewSheet = true
+                                HStack(spacing: 12) {
+                                    ActionStatButton(
+                                        title: "Add to List",
+                                        systemImage: "text.badge.plus"
+                                    ) {
+                                        showAddToListSheet = true
+                                    }
+                                    
+                                    // Share styled to match
+                                    ActionShareBox(
+                                        title: "Share",
+                                        systemImage: "square.and.arrow.up",
+                                        shareText: {
+                                            if let address = restaurant.address,
+                                               let city = restaurant.city,
+                                               let state = restaurant.state,
+                                               let zip = restaurant.zipCode {
+                                                return "\(restaurant.name)\n\(address), \(city), \(state) \(zip)"
+                                            } else {
+                                                return restaurant.name
+                                            }
+                                        }()
+                                    )
                                 }
-                                
-                                // Share styled to match
-                                ActionShareBox(
-                                    title: "Share",
-                                    systemImage: "square.and.arrow.up",
-                                    shareText: {
-                                        if let address = restaurant.address,
-                                           let city = restaurant.city,
-                                           let state = restaurant.state,
-                                           let zip = restaurant.zipCode {
-                                            return "\(restaurant.name)\n\(address), \(city), \(state) \(zip)"
-                                        } else {
-                                            return restaurant.name
-                                        }
-                                    }()
-                                )
                             }
                             .padding(.horizontal)
                             
@@ -235,8 +246,9 @@ struct RestaurantView: View {
                         showReviewSheet = true
                     },
                     onAddToList: {
-                        // TODO: Present list picker
+                        // Present list picker
                         showActionsSheet = false
+                        showAddToListSheet = true
                     }
                 )
                 .presentationDetents([.medium, .large])
@@ -245,6 +257,13 @@ struct RestaurantView: View {
             } else {
                 // Fallback in case restaurant becomes nil
                 EmptyView()
+            }
+        }
+        .sheet(isPresented: $showAddToListSheet) {
+            if let restaurant = vm.restaurant {
+                AddToListView(restaurantId: restaurant.id ?? "", restaurantName: restaurant.name)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
         }
     }
