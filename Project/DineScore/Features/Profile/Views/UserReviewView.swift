@@ -105,8 +105,8 @@ struct UserReviewView: View {
     
     private var sortedReviews: [Review] {
         vm.myReviews.sorted { lhs, rhs in
-            let lhsDate = lhs.createdAt?.dateValue() ?? .distantFuture
-            let rhsDate = rhs.createdAt?.dateValue() ?? .distantFuture
+            let lhsDate = lhs.createdAt?.dateValue() ?? .distantPast
+            let rhsDate = rhs.createdAt?.dateValue() ?? .distantPast
             if lhsDate != rhsDate {
                 return lhsDate < rhsDate
             }
@@ -115,9 +115,7 @@ struct UserReviewView: View {
     }
     
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: date)
+        Self.dateFormatter.string(from: date)
     }
     
     private func reviewSummary(_ review: Review) -> String {
@@ -131,6 +129,12 @@ struct UserReviewView: View {
         }
         return "Review"
     }
+    
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter
+    }()
 }
 
 #Preview {
