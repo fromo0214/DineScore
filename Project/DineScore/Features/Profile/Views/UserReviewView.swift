@@ -11,13 +11,49 @@ struct UserReviewView: View {
     
     //dismisses the current view, used for back button
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var vm: UserProfileViewModel
+    
+    init(vm: UserProfileViewModel) {
+        _vm = StateObject(wrappedValue: vm)
+    }
 
     var body: some View {
         NavigationStack{
             ZStack{
                 Color.backgroundColor
                     .ignoresSafeArea()
-                Text("User Review View")
+                VStack(alignment: .leading, spacing: 0) {
+                    if vm.isLoading {
+                        ProgressView("Loading reviews...")
+                            .padding()
+                    } else if sortedReviews.isEmpty {
+                        Text("No reviews yet.")
+                            .foregroundColor(.secondary)
+                            .padding()
+                    } else {
+                        List {
+                            ForEach(sortedReviews) { review in
+                                HStack(spacing: 10) {
+                                    Image(systemName: "star.bubble.fill")
+                                        .foregroundColor(Color.accentColor)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(reviewSummary(review))
+                                            .foregroundColor(Color.accentColor)
+                                            .lineLimit(1)
+                                        if let date = review.createdAt?.dateValue() {
+                                            Text(formatDate(date))
+                                                .foregroundColor(Color.accentColor)
+                                                .font(.caption.bold())
+                                        }
+                                    }
+                                }
+                                .listRowBackground(Color.backgroundColor)
+                            }
+                        }
+                        .scrollContentBackground(.hidden)
+                    }
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -61,9 +97,42 @@ struct UserReviewView: View {
                 }
             }
         }
+        .task {
+            await vm.getAppUser()
+            await vm.refreshMyReviews()
+        }
+    }
+    
+    private var sortedReviews: [Review] {
+        vm.myReviews.sorted { lhs, rhs in
+            let lhsDate = lhs.createdAt?.dateValue() ?? .distantFuture
+            let rhsDate = rhs.createdAt?.dateValue() ?? .distantFuture
+            if lhsDate != rhsDate {
+                return lhsDate < rhsDate
+            }
+            return (lhs.id ?? "") < (rhs.id ?? "")
+        }
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: date)
+    }
+    
+    private func reviewSummary(_ review: Review) -> String {
+        if let text = review.foodText?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !text.isEmpty {
+            return text
+        }
+        if let text = review.serviceText?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !text.isEmpty {
+            return text
+        }
+        return "Review"
     }
 }
 
 #Preview {
-    UserReviewView()
+    UserReviewView(vm: UserProfileViewModel())
 }
