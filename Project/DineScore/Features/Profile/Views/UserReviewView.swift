@@ -11,10 +11,10 @@ struct UserReviewView: View {
     
     //dismisses the current view, used for back button
     @Environment(\.presentationMode) var presentationMode
-    @StateObject private var vm: UserProfileViewModel
+    @ObservedObject private var vm: UserProfileViewModel
     
     init(vm: UserProfileViewModel) {
-        _vm = StateObject(wrappedValue: vm)
+        self.vm = vm
     }
 
     var body: some View {
@@ -26,13 +26,13 @@ struct UserReviewView: View {
                     if vm.isLoading {
                         ProgressView("Loading reviews...")
                             .padding()
-                    } else if sortedReviews.isEmpty {
+                    } else if vm.myReviews.isEmpty {
                         Text("No reviews yet.")
                             .foregroundColor(.secondary)
                             .padding()
                     } else {
                         List {
-                            ForEach(sortedReviews) { review in
+                            ForEach(vm.myReviews) { review in
                                 HStack(spacing: 10) {
                                     Image(systemName: "star.bubble.fill")
                                         .foregroundColor(Color.accentColor)
@@ -100,17 +100,6 @@ struct UserReviewView: View {
         .task {
             await vm.getAppUser()
             await vm.refreshMyReviews()
-        }
-    }
-    
-    private var sortedReviews: [Review] {
-        vm.myReviews.sorted { lhs, rhs in
-            let lhsDate = lhs.createdAt?.dateValue() ?? .distantPast
-            let rhsDate = rhs.createdAt?.dateValue() ?? .distantPast
-            if lhsDate != rhsDate {
-                return lhsDate < rhsDate
-            }
-            return (lhs.id ?? "") < (rhs.id ?? "")
         }
     }
     
