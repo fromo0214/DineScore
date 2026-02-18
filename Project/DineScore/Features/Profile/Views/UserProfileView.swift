@@ -60,7 +60,7 @@ struct UserProfileView: View {
                         case .lists:
                             UserListsView()
                         case .reviews:
-                            UserReviewView()
+                            UserReviewView(vm: vm)
                         case .socials:
                             if let user = vm.currentUser{
                                 UserSocialsView(currentUser: user, vm: vm)
