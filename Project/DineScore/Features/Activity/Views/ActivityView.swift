@@ -62,11 +62,9 @@ struct ActivityView: View {
                 .scrollContentBackground(.hidden)
             }
         }
-        .task(id: session.currentUser?.id) {
+        .task(id: ActivityTaskKey(userId: session.currentUser?.id,
+                                  following: session.currentUser?.following ?? [])) {
             await viewModel.startLiveUpdates(currentUser: session.currentUser)
-        }
-        .onChange(of: session.currentUser?.following) { _ in
-            Task { await viewModel.startLiveUpdates(currentUser: session.currentUser) }
         }
         .onDisappear { viewModel.stopLiveUpdates() }
     }
@@ -159,7 +157,13 @@ final class ActivityViewModel: ObservableObject {
             } else {
                 actorName = "Someone"
             }
-            let fallbackId = "\(activity.userId)-\(activity.timestamp.timeIntervalSince1970)"
+            let fallbackId = [
+                activity.userId,
+                activity.type.rawValue,
+                activity.restaurantId ?? "",
+                activity.reviewId ?? "",
+                String(activity.timestamp.timeIntervalSince1970)
+            ].joined(separator: "-")
             return ActivityItem(
                 id: activity.id ?? fallbackId,
                 actorName: actorName,
@@ -192,12 +196,10 @@ final class ActivityViewModel: ObservableObject {
                 }
             }
 
-            var map: [String: UserPublic] = [:]
             for await (id, user) in group {
-                if let user { map[id] = user }
-            }
-            for (id, user) in map {
-                usersById[id] = user
+                if let user {
+                    usersById[id] = user
+                }
             }
         }
     }
@@ -222,6 +224,11 @@ final class ActivityViewModel: ObservableObject {
 private enum ActivityTarget {
     case you
     case friends
+}
+
+private struct ActivityTaskKey: Hashable {
+    let userId: String?
+    let following: [String]
 }
 
 #Preview {
