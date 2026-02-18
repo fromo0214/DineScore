@@ -50,4 +50,53 @@ final class ActivityRepository {
             try doc.data(as: UserActivity.self)
         }
     }
+
+    // Listen for recent activities for a single user (live updates)
+    func listenRecentActivities(
+        userId: String,
+        limit: Int = 20,
+        onUpdate: @escaping ([UserActivity]) -> Void,
+        onError: @escaping (Error) -> Void
+    ) -> ListenerRegistration {
+        return activities
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "createdAt", descending: true)
+            .limit(to: limit)
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    onError(error)
+                    return
+                }
+                let docs = snapshot?.documents ?? []
+                let items = docs.compactMap { try? $0.data(as: UserActivity.self) }
+                onUpdate(items)
+            }
+    }
+
+    // Listen for recent activities for multiple users (live updates)
+    func listenRecentActivities(
+        userIds: [String],
+        limit: Int = 20,
+        onUpdate: @escaping ([UserActivity]) -> Void,
+        onError: @escaping (Error) -> Void
+    ) -> ListenerRegistration? {
+        guard !userIds.isEmpty else {
+            onUpdate([])
+            return nil
+        }
+
+        return activities
+            .whereField("userId", in: userIds)
+            .order(by: "createdAt", descending: true)
+            .limit(to: limit)
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    onError(error)
+                    return
+                }
+                let docs = snapshot?.documents ?? []
+                let items = docs.compactMap { try? $0.data(as: UserActivity.self) }
+                onUpdate(items)
+            }
+    }
 }
