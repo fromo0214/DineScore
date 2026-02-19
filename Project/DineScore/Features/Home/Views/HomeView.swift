@@ -53,7 +53,7 @@ struct HomeView: View {
                     navButton(icon: "gearshape.fill", tab: .settings)
                 }
                 .shadow(radius: 5)
-                .frame(width:350, height: bottomBarHeight)
+                .frame(width: 350, height: bottomBarHeight)
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .background(Color.textColor)
             }
