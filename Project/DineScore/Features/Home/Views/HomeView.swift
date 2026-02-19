@@ -41,7 +41,7 @@ struct HomeView: View {
             }
             .padding(.bottom, bottomBarHeight + bottomBarSpacing)
 
-            }.safeAreaInset(edge: .bottom, spacing: bottomBarSpacing) {
+            }.overlay(alignment: .bottom) {
                 //Navigation Bar
                 HStack {
                     navButton(icon: "house.fill", tab: .home)
