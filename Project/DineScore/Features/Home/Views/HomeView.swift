@@ -11,6 +11,9 @@ import FirebaseAuth
 struct HomeView: View {
     @State private var searchText: String = ""
     @State private var selectedTab: AppTab = .home
+
+    private let bottomBarHeight: CGFloat = 50
+    private let bottomBarSpacing: CGFloat = 12
     
     @AppStorage("hasRequestedNotifications") private var hasRequestedNotifications = false
     
@@ -36,8 +39,9 @@ struct HomeView: View {
                     SettingsView()
                 }
             }
-            
-            }.safeAreaInset(edge: .bottom, spacing: 12) {
+            .padding(.bottom, bottomBarHeight + bottomBarSpacing)
+
+            }.safeAreaInset(edge: .bottom, spacing: bottomBarSpacing) {
                 //Navigation Bar
                 HStack {
                     navButton(icon: "house.fill", tab: .home)
@@ -49,7 +53,7 @@ struct HomeView: View {
                     navButton(icon: "gearshape.fill", tab: .settings)
                 }
                 .shadow(radius: 5)
-                .frame(width:350, height:50)
+                .frame(width:350, height: bottomBarHeight)
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .background(Color.textColor)
             }
