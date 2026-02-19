@@ -15,6 +15,10 @@ struct HomeView: View {
     private let navigationBarHeight: CGFloat = 50
     private let navigationBarWidth: CGFloat = 350
     private let navigationBarBottomPadding: CGFloat = 12
+
+    private var navigationBarTotalHeight: CGFloat {
+        navigationBarHeight + navigationBarBottomPadding
+    }
     
     @AppStorage("hasRequestedNotifications") private var hasRequestedNotifications = false
     
@@ -40,7 +44,7 @@ struct HomeView: View {
                     SettingsView()
                 }
             }
-            .padding(.bottom, navigationBarHeight + navigationBarBottomPadding)
+            .padding(.bottom, navigationBarTotalHeight)
 
             }.overlay(alignment: .bottom) {
                 //Navigation Bar
