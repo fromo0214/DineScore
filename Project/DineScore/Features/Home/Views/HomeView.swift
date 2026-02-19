@@ -57,6 +57,7 @@ struct HomeView: View {
                 .frame(width: navigationBarWidth, height: navigationBarHeight)
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .background(Color.textColor)
+                .padding(.bottom, navigationBarBottomPadding)
             }
             
         
