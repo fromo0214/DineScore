@@ -3,10 +3,15 @@ import SwiftUI
 
 struct RestaurantReviewsView: View {
     let restaurantId: String
+    let highlightReviewId: String?
     @StateObject private var vm: RestaurantReviewsViewModel
+    @State private var hasScheduledScroll = false
+    // Small delay to allow layout before scrolling to the highlighted review.
+    private static let scrollDelaySeconds: TimeInterval = 0.1
 
-    @MainActor init(restaurantId: String, viewModel: RestaurantReviewsViewModel? = nil) {
+    @MainActor init(restaurantId: String, highlightReviewId: String? = nil, viewModel: RestaurantReviewsViewModel? = nil) {
         self.restaurantId = restaurantId
+        self.highlightReviewId = highlightReviewId
         if let viewModel {
             _vm = StateObject(wrappedValue: viewModel)
         } else {
@@ -27,22 +32,32 @@ struct RestaurantReviewsView: View {
                     .foregroundColor(.secondary)
                     .padding()
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ReviewsSummaryHeader(
-                            averageFoodScore: vm.averageFoodScore,
-                            averageServiceScore: vm.averageServiceScore
-                        )
-                        Divider()
-                            .padding(.horizontal, 16)
-                        ForEach(vm.reviews) { review in
-                            OrganizedReviewCard(review: review)
-                                .environmentObject(vm)
-                            if review.id != vm.reviews.last?.id {
-                                Divider()
-                                    .padding(.horizontal, 16)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ReviewsSummaryHeader(
+                                averageFoodScore: vm.averageFoodScore,
+                                averageServiceScore: vm.averageServiceScore
+                            )
+                            Divider()
+                                .padding(.horizontal, 16)
+                            ForEach(vm.reviews) { review in
+                                OrganizedReviewCard(review: review, isHighlighted: review.id == highlightReviewId)
+                                    .environmentObject(vm)
+                                    .id(anchorId(for: review))
+                                if review.id != vm.reviews.last?.id {
+                                    Divider()
+                                        .padding(.horizontal, 16)
+                                }
                             }
                         }
+                    }
+                    .onChange(of: vm.reviews) { _ in
+                        hasScheduledScroll = false
+                        scrollToHighlight(using: proxy)
+                    }
+                    .onAppear {
+                        scrollToHighlight(using: proxy)
                     }
                 }
             }
@@ -51,11 +66,39 @@ struct RestaurantReviewsView: View {
             await vm.loadReviews(for: restaurantId)
         }
     }
+    
+    private func scrollToHighlight(using proxy: ScrollViewProxy) {
+        guard !hasScheduledScroll, let highlightReviewId else { return }
+        guard let targetReview = vm.reviews.first(where: { $0.id == highlightReviewId }) else { return }
+        let targetId = anchorId(for: targetReview)
+        hasScheduledScroll = true
+        Task { @MainActor in
+            do {
+                try await Task.sleep(nanoseconds: UInt64(Self.scrollDelaySeconds * 1_000_000_000))
+            } catch {
+                return
+            }
+            withAnimation(.easeInOut) {
+                proxy.scrollTo(targetId, anchor: .top)
+            }
+        }
+    }
+    
+    private func anchorId(for review: Review) -> String {
+        if let id = review.id {
+            return id
+        }
+        if let timestamp = review.createdAt?.dateValue().timeIntervalSince1970 {
+            return "\(review.userId)-\(timestamp)"
+        }
+        return "\(review.userId)-\(review.restaurantId)"
+    }
 }
 
 // MARK: - Organized Review Card
 struct OrganizedReviewCard: View {
     let review: Review
+    var isHighlighted: Bool = false
     @EnvironmentObject private var vm: RestaurantReviewsViewModel
     
     var body: some View {
@@ -231,6 +274,10 @@ struct OrganizedReviewCard: View {
             }
         }
         .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(isHighlighted ? Color.accentColor.opacity(0.12) : Color.clear)
+        )
     }
     
     private func avatarPlaceholder(user: UserPublic?) -> some View {
