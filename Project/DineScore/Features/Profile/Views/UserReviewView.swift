@@ -13,11 +13,20 @@ struct UserReviewView: View {
     @StateObject private var vm: UserProfileViewModel
     @State private var restaurantDetails: [String: RestaurantPublic] = [:]
     @State private var isLoadingReviews = false
+    @State private var isLoadingRestaurants = false
     
-    private let restaurantRepo = RestaurantRepository()
+    private let restaurantRepo: RestaurantRepository
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+    private static let defaultReviewSummary = "Review"
     
-    init(vm: UserProfileViewModel) {
+    init(vm: UserProfileViewModel, restaurantRepo: RestaurantRepository = RestaurantRepository()) {
         _vm = StateObject(wrappedValue: vm)
+        self.restaurantRepo = restaurantRepo
     }
 
     var body: some View {
@@ -117,7 +126,7 @@ struct UserReviewView: View {
     }
     
     private func reviewRow(review: Review, restaurant: RestaurantPublic?) -> some View {
-        let restaurantName = restaurant?.name ?? "Restaurant"
+        let restaurantName = restaurant?.name ?? "Unknown Restaurant"
         let city = restaurant?.city ?? ""
         let state = restaurant?.state ?? ""
         let location = locationString(city: city, state: state)
@@ -162,27 +171,23 @@ struct UserReviewView: View {
     }
     
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: date)
+        Self.dateFormatter.string(from: date)
     }
     
     private func reviewSummary(_ review: Review) -> String {
-        if let text = review.foodText?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !text.isEmpty {
-            return text
-        }
-        if let text = review.serviceText?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !text.isEmpty {
-            return text
-        }
-        return "Review"
+        [review.foodText, review.serviceText]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty } ?? Self.defaultReviewSummary
     }
     
     @MainActor
     private func loadRestaurantDetails(for reviews: [Review]) async {
+        guard !isLoadingRestaurants else { return }
+        isLoadingRestaurants = true
+        defer { isLoadingRestaurants = false }
         let ids = Set(reviews.map { $0.restaurantId })
-        let missing = ids.subtracting(restaurantDetails.keys).filter { !$0.isEmpty }
+        let nonEmptyIds = ids.filter { !$0.isEmpty }
+        let missing = nonEmptyIds.subtracting(restaurantDetails.keys)
         guard !missing.isEmpty else { return }
         let results: [String: RestaurantPublic] = await withTaskGroup(of: (String, RestaurantPublic?).self) { group in
             for id in missing {
