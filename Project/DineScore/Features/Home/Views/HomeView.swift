@@ -12,8 +12,8 @@ struct HomeView: View {
     @State private var searchText: String = ""
     @State private var selectedTab: AppTab = .home
 
-    private let bottomBarHeight: CGFloat = 50
-    private let bottomBarSpacing: CGFloat = 12
+    private let navigationBarHeight: CGFloat = 50
+    private let navigationBarBottomPadding: CGFloat = 12
     
     @AppStorage("hasRequestedNotifications") private var hasRequestedNotifications = false
     
@@ -39,7 +39,7 @@ struct HomeView: View {
                     SettingsView()
                 }
             }
-            .padding(.bottom, bottomBarHeight + bottomBarSpacing)
+            .padding(.bottom, navigationBarHeight + navigationBarBottomPadding)
 
             }.overlay(alignment: .bottom) {
                 //Navigation Bar
@@ -53,7 +53,7 @@ struct HomeView: View {
                     navButton(icon: "gearshape.fill", tab: .settings)
                 }
                 .shadow(radius: 5)
-                .frame(width: 350, height: bottomBarHeight)
+                .frame(width: 350, height: navigationBarHeight)
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .background(Color.textColor)
             }
