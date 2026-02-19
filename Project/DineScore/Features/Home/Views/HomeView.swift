@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var selectedTab: AppTab = .home
 
     private let navigationBarHeight: CGFloat = 50
+    private let navigationBarWidth: CGFloat = 350
     private let navigationBarBottomPadding: CGFloat = 12
     
     @AppStorage("hasRequestedNotifications") private var hasRequestedNotifications = false
@@ -53,7 +54,7 @@ struct HomeView: View {
                     navButton(icon: "gearshape.fill", tab: .settings)
                 }
                 .shadow(radius: 5)
-                .frame(width: 350, height: navigationBarHeight)
+                .frame(width: navigationBarWidth, height: navigationBarHeight)
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .background(Color.textColor)
             }
