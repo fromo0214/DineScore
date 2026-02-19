@@ -14,7 +14,7 @@ struct HomeView: View {
 
     private let navigationBarHeight: CGFloat = 50
     private let navigationBarWidth: CGFloat = 350
-    private let navigationBarBottomPadding: CGFloat = 12
+    private let navigationBarBottomPadding: CGFloat = 0
 
     private var navigationBarTotalHeight: CGFloat {
         navigationBarHeight + navigationBarBottomPadding
