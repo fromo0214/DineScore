@@ -109,6 +109,12 @@ struct UserSocialsView: View {
                 }
         }
         .task { await loadUserProfiles() }
+        .onChange(of: followers) { _ in
+            Task { await loadUserProfiles() }
+        }
+        .onChange(of: following) { _ in
+            Task { await loadUserProfiles() }
+        }
     }
     
     private func handleRemoveOrUnfollow(userId: String) async {
@@ -194,4 +200,3 @@ struct UserSocialsView: View {
         return (f + l).uppercased()
     }
 }
-
