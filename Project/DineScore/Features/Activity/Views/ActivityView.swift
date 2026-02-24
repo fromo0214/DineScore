@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import FirebaseAuth
 
 struct ActivityView: View {
 
@@ -83,6 +84,7 @@ final class ActivityViewModel: ObservableObject {
     private let fetchYou: () async -> [ActivityItem]
     private let fetchFriends: () async -> [ActivityItem]
     private var timerCancellable: AnyCancellable?
+    private var activeUserId: String?
 
     init(
         fetchYou: @escaping () async -> [ActivityItem],
@@ -93,11 +95,24 @@ final class ActivityViewModel: ObservableObject {
     }
 
     func startLiveUpdates() async {
-        await refresh()
+        let userId = Auth.auth().currentUser?.uid
+        if activeUserId != userId {
+            activeUserId = userId
+            youActivity = []
+            friendsActivity = []
+        }
+        await refresh(for: userId)
         timerCancellable = Timer.publish(every: 10, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                Task { await self?.refresh() }
+                guard let self else { return }
+                let userId = Auth.auth().currentUser?.uid
+                if self.activeUserId != userId {
+                    self.activeUserId = userId
+                    self.youActivity = []
+                    self.friendsActivity = []
+                }
+                Task { await self.refresh(for: userId) }
             }
     }
 
@@ -111,11 +126,19 @@ final class ActivityViewModel: ObservableObject {
         return source.sorted { $0.date > $1.date }
     }
 
-    private func refresh() async {
+    private func refresh(for userId: String?) async {
+        guard let userId else {
+            youActivity = []
+            friendsActivity = []
+            return
+        }
         async let you = fetchYou()
         async let friends = fetchFriends()
-        youActivity = await you
-        friendsActivity = await friends
+        let refreshedYou = await you
+        let refreshedFriends = await friends
+        guard activeUserId == userId else { return }
+        youActivity = refreshedYou
+        friendsActivity = refreshedFriends
     }
 }
 

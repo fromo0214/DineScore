@@ -11,6 +11,7 @@ import FirebaseAuth
 struct UserAccountSettingsView: View {
     
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject private var session: UserSession
     @AppStorage("userIsLoggedIn") var userIsLoggedIn: Bool = false
     @State var showLevelBadgesView: Bool = false
     @State var showConfirmationMessage: Bool = false
@@ -88,6 +89,7 @@ struct UserAccountSettingsView: View {
 
     func signOut(){
         do {
+            session.stop()
             try Auth.auth().signOut()
             userIsLoggedIn = false
             print("User signed out successfully")
