@@ -111,6 +111,30 @@ final class RestaurantReviewsViewModel: ObservableObject {
             await refreshLikeCount(reviewId: reviewId, fallbackCount: originalCount)
         }
     }
+    
+    func canDeleteReview(_ review: Review) -> Bool {
+        guard let uid = Auth.auth().currentUser?.uid else { return false }
+        return review.userId == uid && !(review.id ?? "").isEmpty
+    }
+    
+    func deleteReview(_ review: Review) async {
+        guard let reviewId = review.id, !reviewId.isEmpty else { return }
+        guard let uid = Auth.auth().currentUser?.uid else {
+            errorMessage = "Sign in to delete your review."
+            return
+        }
+        guard review.userId == uid else {
+            errorMessage = "You can only delete your own reviews."
+            return
+        }
+        do {
+            try await reviewRepo.deleteReview(id: reviewId, userId: uid)
+            reviews.removeAll { $0.id == reviewId }
+            likedReviewIds.remove(reviewId)
+        } catch {
+            errorMessage = "Failed to delete review: \(error.localizedDescription)"
+        }
+    }
 
     private func refreshLikeCount(reviewId: String, fallbackCount: Int) async {
         do {
