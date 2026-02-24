@@ -1,14 +1,12 @@
 import SwiftUI
 import Combine
-import FirebaseAuth
+import FirebaseFirestore
 
 struct ActivityView: View {
 
+    @EnvironmentObject private var session: UserSession
     @State private var selectedTab: ActivityTab = .friends
-    @StateObject private var viewModel = ActivityViewModel(
-        fetchYou: { await ActivityAPI.fetchYouActivity() },
-        fetchFriends: { await ActivityAPI.fetchFriendsActivity() }
-    )
+    @StateObject private var viewModel = ActivityViewModel()
 
     enum ActivityTab: String, CaseIterable, Identifiable {
         case friends = "Friends"
@@ -84,39 +82,50 @@ final class ActivityViewModel: ObservableObject {
     @Published private(set) var youActivity: [ActivityItem] = []
     @Published private(set) var friendsActivity: [ActivityItem] = []
 
-    private let fetchYou: () async -> [ActivityItem]
-    private let fetchFriends: () async -> [ActivityItem]
-    private var timerCancellable: AnyCancellable?
-    private var activeUserId: String?
+    private let activityRepo = ActivityRepository()
+    private let userRepo = AppUserRepository()
+    private var youListener: ListenerRegistration?
+    private var friendsListener: ListenerRegistration?
+    private var usersById: [String: UserPublic] = [:]
+    private var currentUserId: String?
 
-    init(
-        fetchYou: @escaping () async -> [ActivityItem],
-        fetchFriends: @escaping () async -> [ActivityItem]
-    ) {
-        self.fetchYou = fetchYou
-        self.fetchFriends = fetchFriends
-    }
-
-    func startLiveUpdates() async {
-        let userId = Auth.auth().currentUser?.uid
-        if activeUserId != userId {
-            activeUserId = userId
+    func startLiveUpdates(currentUser: AppUser?) async {
+        stopLiveUpdates()
+        guard let userId = currentUser?.id else {
             youActivity = []
             friendsActivity = []
+            return
         }
-        await refresh(for: userId)
-        timerCancellable = Timer.publish(every: 10, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self else { return }
-                let userId = Auth.auth().currentUser?.uid
-                if self.activeUserId != userId {
-                    self.activeUserId = userId
-                    self.youActivity = []
-                    self.friendsActivity = []
-                }
-                Task { await self.refresh(for: userId) }
+
+        currentUserId = userId
+        let followingIds = currentUser?.following.filter { $0 != userId } ?? []
+
+        youListener = activityRepo.listenRecentActivities(
+            userId: userId,
+            limit: 20,
+            onUpdate: { [weak self] activities in
+                Task { await self?.handleUpdates(activities, defaultName: "You", target: .you) }
+            },
+            onError: { error in
+                print("Error listening for your activity: \(error.localizedDescription)")
             }
+        )
+
+        guard !followingIds.isEmpty else {
+            friendsActivity = []
+            return
+        }
+
+        friendsListener = activityRepo.listenRecentActivities(
+            userIds: followingIds,
+            limit: 20,
+            onUpdate: { [weak self] activities in
+                Task { await self?.handleUpdates(activities, defaultName: nil, target: .friends) }
+            },
+            onError: { error in
+                print("Error listening for friends activity: \(error.localizedDescription)")
+            }
+        )
     }
 
     func stopLiveUpdates() {
@@ -131,38 +140,96 @@ final class ActivityViewModel: ObservableObject {
         return source.sorted { $0.date > $1.date }
     }
 
-    private func refresh(for userId: String?) async {
-        guard let userId else {
-            youActivity = []
-            friendsActivity = []
-            return
+    private func handleUpdates(
+        _ activities: [UserActivity],
+        defaultName: String?,
+        target: ActivityTarget
+    ) async {
+        let ids = Array(Set(activities.map { $0.userId }))
+        await prefetchUsers(for: ids)
+
+        let currentId = currentUserId
+        let items = activities.map { activity in
+            let actorName: String
+            if let defaultName, activity.userId == currentId {
+                actorName = defaultName
+            } else if let user = usersById[activity.userId] {
+                actorName = user.displayNameShort
+            } else {
+                actorName = "Someone"
+            }
+            let fallbackId = [
+                activity.userId,
+                activity.type.rawValue,
+                activity.restaurantId ?? "",
+                activity.reviewId ?? "",
+                String(activity.timestamp.timeIntervalSince1970)
+            ].joined(separator: "-")
+            return ActivityItem(
+                id: activity.id ?? fallbackId,
+                actorName: actorName,
+                actionText: actionText(for: activity),
+                date: activity.timestamp
+            )
         }
-        async let you = fetchYou()
-        async let friends = fetchFriends()
-        let refreshedYou = await you
-        let refreshedFriends = await friends
-        guard activeUserId == userId else { return }
-        youActivity = refreshedYou
-        friendsActivity = refreshedFriends
+
+        switch target {
+        case .you:
+            youActivity = items
+        case .friends:
+            friendsActivity = items
+        }
+    }
+
+    private func prefetchUsers(for ids: [String]) async {
+        let missing = ids.filter { usersById[$0] == nil }
+        guard !missing.isEmpty else { return }
+
+        await withTaskGroup(of: (String, UserPublic?).self) { group in
+            for id in missing {
+                group.addTask { [userRepo] in
+                    do {
+                        let user = try await userRepo.fetchUser(id: id)
+                        return (id, user)
+                    } catch {
+                        return (id, nil)
+                    }
+                }
+            }
+
+            for await (id, user) in group {
+                if let user {
+                    usersById[id] = user
+                }
+            }
+        }
+    }
+
+    private func actionText(for activity: UserActivity) -> String {
+        switch activity.type {
+        case .likedRestaurant:
+            let name = activity.restaurantName ?? "a restaurant"
+            return "liked \(name)"
+        case .likedReview:
+            if let name = activity.restaurantName {
+                return "liked a review for \(name)"
+            }
+            return "liked a review"
+        case .createdReview:
+ let            name = activity.restaurantName ?? "a restaurant"
+            return "reviewed \(name)"
+        }
     }
 }
 
-enum ActivityAPI {
-    static func fetchYouActivity() async -> [ActivityItem] {
-        // Replace with real backend call
-        return [
-            .init(id: "y1", actorName: "You", actionText: "reviewed Sushi Place", date: Date().addingTimeInterval(-600)),
-            .init(id: "y2", actorName: "You", actionText: "liked Taco Spot", date: Date().addingTimeInterval(-1200))
-        ]
-    }
+private enum ActivityTarget {
+    case you
+    case friends
+}
 
-    static func fetchFriendsActivity() async -> [ActivityItem] {
-        // Replace with real backend call
-        return [
-            .init(id: "f1", actorName: "Alex", actionText: "reviewed House Pasta", date: Date().addingTimeInterval(-300)),
-            .init(id: "f2", actorName: "Jordan", actionText: "liked Burger Joint", date: Date().addingTimeInterval(-1800))
-        ]
-    }
+private struct ActivityTaskKey: Hashable {
+    let userId: String?
+    let following: [String]
 }
 
 #Preview {
