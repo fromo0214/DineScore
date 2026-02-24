@@ -110,6 +110,7 @@ struct HomeContentView: View {
                                             featuredRestaurantCard(restaurant)
                                         }
                                     }
+                                    .padding(.horizontal, 2)
                                 }
                             }
                         }.padding()
@@ -254,7 +255,7 @@ struct HomeContentView: View {
                     Text(restaurant.name)
                         .bold()
                         .lineLimit(2)
-                    Text("Food \(formatScore(restaurant.avgFoodScore)) • Service \(formatScore(restaurant.avgServiceScore))")
+                    Text("Food score: \(formatScore(restaurant.avgFoodScore)), Service score: \(formatScore(restaurant.avgServiceScore))")
                         .font(.caption)
                 }
                 .foregroundColor(.white)
@@ -263,6 +264,7 @@ struct HomeContentView: View {
             .frame(width: 250, height: 150)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
+        .accessibilityLabel("View details for \(restaurant.name), food score \(formatScore(restaurant.avgFoodScore)), service score \(formatScore(restaurant.avgServiceScore))")
     }
     
     private func formatScore(_ score: Double?) -> String {
