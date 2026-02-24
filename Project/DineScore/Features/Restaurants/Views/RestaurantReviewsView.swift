@@ -52,7 +52,7 @@ struct RestaurantReviewsView: View {
                             }
                         }
                     }
-                    .onChange(of: vm.reviews) { _ in
+                    .onChange(of: vm.reviews) { _, _ in
                         hasScheduledScroll = false
                         scrollToHighlight(using: proxy)
                     }

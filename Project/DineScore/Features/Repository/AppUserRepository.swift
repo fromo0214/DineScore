@@ -208,7 +208,7 @@ final class AppUserRepository{
     private func updateReviewLike(uid: String, reviewId: String, shouldLike: Bool) async throws {
         let userRef = users.document(uid)
         let reviewRef = reviews.document(reviewId)
-        _ = try await db.runTransaction { transaction, errorPointer in
+        let _ = try await db.runTransaction { transaction, errorPointer in
             do {
                 let userSnapshot = try transaction.getDocument(userRef)
                 let reviewSnapshot = try transaction.getDocument(reviewRef)
@@ -244,7 +244,7 @@ final class AppUserRepository{
         let currentUserRef = users.document(currentUserId)
         let targetUserRef = users.document(targetUserId)
         
-        try await db.runTransaction { transaction, errorPointer in
+        let _ = try await db.runTransaction { transaction, errorPointer in
             // Add targetUserId to current user's following list
             transaction.updateData([
                 "following": FieldValue.arrayUnion([targetUserId])
@@ -268,7 +268,7 @@ final class AppUserRepository{
         let currentUserRef = users.document(currentUserId)
         let targetUserRef = users.document(targetUserId)
         
-        try await db.runTransaction { transaction, errorPointer in
+        let _ = try await db.runTransaction { transaction, errorPointer in
             // Remove targetUserId from current user's following list
             transaction.updateData([
                 "following": FieldValue.arrayRemove([targetUserId])
@@ -291,3 +291,4 @@ final class AppUserRepository{
         return following.contains(targetUserId)
     }
 }
+

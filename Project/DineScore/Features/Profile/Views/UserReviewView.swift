@@ -118,7 +118,7 @@ struct UserReviewView: View {
             await loadRestaurantDetails(for: vm.myReviews)
             isLoadingReviews = false
         }
-        .onChange(of: vm.myReviews) { reviews in
+        .onChange(of: vm.myReviews) { reviews, _ in
             Task {
                 await loadRestaurantDetails(for: reviews)
             }

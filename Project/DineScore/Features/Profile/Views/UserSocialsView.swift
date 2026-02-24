@@ -109,10 +109,10 @@ struct UserSocialsView: View {
                 }
         }
         .task { await loadUserProfiles() }
-        .onChange(of: followers) { _ in
+        .onChange(of: followers) { _, _ in
             Task { await loadUserProfiles() }
         }
-        .onChange(of: following) { _ in
+        .onChange(of: following) { _, _ in
             Task { await loadUserProfiles() }
         }
     }

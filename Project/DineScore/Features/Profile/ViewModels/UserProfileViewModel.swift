@@ -146,8 +146,25 @@ final class UserProfileViewModel: ObservableObject{
         }
         do {
             let reviews = try await reviewRepo.fetchReviewsByUser(uid, limit: 100)
-            myReviews = reviews
-            reviewerLevel = ReviewerLevelCalculator.level(from: reviews)
+            let sortedReviews = reviews.sorted { lhs, rhs in
+                let lhsDate = lhs.createdAt?.dateValue() ?? .distantPast
+                let rhsDate = rhs.createdAt?.dateValue() ?? .distantPast
+                if lhsDate != rhsDate {
+                    return lhsDate > rhsDate
+                }
+                switch (lhs.id, rhs.id) {
+                case let (left?, right?):
+                    return left < right
+                case (_?, nil):
+                    return true
+                case (nil, _?):
+                    return false
+                default:
+                    return false
+                }
+            }
+            myReviews = sortedReviews
+            reviewerLevel = ReviewerLevelCalculator.level(from: sortedReviews)
         } catch {
             errorMessage = "Failed to load reviews: \(error.localizedDescription)"
             myReviews = []
