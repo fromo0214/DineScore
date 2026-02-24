@@ -114,7 +114,7 @@ final class RestaurantReviewsViewModel: ObservableObject {
     
     func canDeleteReview(_ review: Review) -> Bool {
         guard let uid = Auth.auth().currentUser?.uid else { return false }
-        return review.userId == uid && !(review.id ?? "").isEmpty
+        return review.userId == uid
     }
     
     func deleteReview(_ review: Review) async {
@@ -129,7 +129,9 @@ final class RestaurantReviewsViewModel: ObservableObject {
         }
         do {
             try await reviewRepo.deleteReview(id: reviewId, userId: uid)
-            reviews.removeAll { $0.id == reviewId }
+            if let index = reviews.firstIndex(where: { $0.id == reviewId }) {
+                reviews.remove(at: index)
+            }
             likedReviewIds.remove(reviewId)
         } catch {
             errorMessage = "Failed to delete review: \(error.localizedDescription)"
