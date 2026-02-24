@@ -114,7 +114,7 @@ struct HomeContentView: View {
                             Spacer()
                         }.padding()
                         VStack {
-                            if let zipCode = userVm.currentUser?.zipCode?.trimmingCharacters(in: .whitespacesAndNewlines), !zipCode.isEmpty {
+                            if let zipCode = normalizedUserZipCode {
                                 if topRatedNearbyRestaurants.isEmpty {
                                     Text("No top-rated restaurants found for \(zipCode).")
                                         .foregroundColor(Color.accentColor)
@@ -175,7 +175,7 @@ struct HomeContentView: View {
             featuredRestaurants = []
         }
         
-        if let zipCode = userVm.currentUser?.zipCode?.trimmingCharacters(in: .whitespacesAndNewlines), !zipCode.isEmpty {
+        if let zipCode = normalizedUserZipCode {
             do {
                 topRatedNearbyRestaurants = try await restaurantRepo.fetchTopRatedRestaurants(zipCode: zipCode, limit: 6)
             } catch {
@@ -187,9 +187,8 @@ struct HomeContentView: View {
     }
     
     private func restaurantListRow(_ restaurant: RestaurantPublic) -> some View {
-        let restaurantId = restaurant.id ?? ""
         return Button {
-            guard !restaurantId.isEmpty else { return }
+            guard let restaurantId = restaurant.id, !restaurantId.isEmpty else { return }
             selectedRestaurantId = restaurantId
         } label: {
             HStack {
@@ -197,7 +196,7 @@ struct HomeContentView: View {
                     Text(restaurant.name)
                         .foregroundColor(Color.backgroundColor)
                         .bold()
-                    Text((restaurant.city ?? "") + ((restaurant.state == nil || restaurant.state?.isEmpty == true) ? "" : ", \(restaurant.state ?? "")"))
+                    Text(formatLocation(city: restaurant.city, state: restaurant.state))
                         .foregroundColor(Color.backgroundColor)
                         .font(.caption)
                 }
@@ -212,5 +211,22 @@ struct HomeContentView: View {
                     .foregroundColor(Color.accentColor)
             )
         }
+    }
+    
+    private func formatLocation(city: String?, state: String?) -> String {
+        let cityValue = (city ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let stateValue = (state ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        switch (cityValue.isEmpty, stateValue.isEmpty) {
+        case (false, false): return "\(cityValue), \(stateValue)"
+        case (false, true): return cityValue
+        case (true, false): return stateValue
+        default: return ""
+        }
+    }
+    
+    private var normalizedUserZipCode: String? {
+        guard let zipCode = userVm.currentUser?.zipCode?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !zipCode.isEmpty else { return nil }
+        return zipCode
     }
 }

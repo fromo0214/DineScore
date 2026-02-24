@@ -51,17 +51,16 @@ final class RestaurantRepository{
         
         let snapshot = try await restaurants
             .whereField("zipCode", isEqualTo: normalizedZip)
-            .limit(to: max(limit * 3, limit))
+            .limit(to: limit * 3)
             .getDocuments()
         
         let decoded = snapshot.documents.compactMap { try? $0.data(as: RestaurantPublic.self) }
-        return decoded
+        return Array(decoded
             .sorted {
                 (($0.avgFoodScore ?? 0) + ($0.avgServiceScore ?? 0)) >
                 (($1.avgFoodScore ?? 0) + ($1.avgServiceScore ?? 0))
             }
-            .prefix(limit)
-            .map { $0 }
+            .prefix(limit))
     }
     
     private func queryPrefix(field: String, q: String, limit: Int) async throws -> [RestaurantPublic] {
