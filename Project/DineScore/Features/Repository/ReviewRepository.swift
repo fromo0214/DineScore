@@ -11,6 +11,20 @@ import FirebaseAuth
 import FirebaseFirestore
 
 final class ReviewRepository{
+    enum ReviewRepositoryError: LocalizedError {
+        case reviewNotFound
+        case notAuthorizedToDelete
+        
+        var errorDescription: String? {
+            switch self {
+            case .reviewNotFound:
+                return "Review not found."
+            case .notAuthorizedToDelete:
+                return "You can only delete your own reviews."
+            }
+        }
+    }
+    
     private let db = Firestore.firestore()
     private let uploader = ImageUploader()
     private let activityRepo = ActivityRepository()
@@ -133,6 +147,17 @@ final class ReviewRepository{
         let snap = try await reviews.document(id).getDocument()
         guard snap.exists else { return nil }
         return try snap.data(as: Review.self)
+    }
+    
+    func deleteReview(id: String, userId: String) async throws {
+        let ref = reviews.document(id)
+        guard let review = try await fetchReview(id: id) else {
+            throw ReviewRepositoryError.reviewNotFound
+        }
+        guard review.userId == userId else {
+            throw ReviewRepositoryError.notAuthorizedToDelete
+        }
+        try await ref.delete()
     }
 
 }

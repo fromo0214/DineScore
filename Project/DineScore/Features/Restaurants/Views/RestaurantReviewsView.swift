@@ -100,6 +100,7 @@ struct OrganizedReviewCard: View {
     let review: Review
     var isHighlighted: Bool = false
     @EnvironmentObject private var vm: RestaurantReviewsViewModel
+    @State private var showDeleteConfirmation = false
     
     var body: some View {
         let user = vm.usersById[review.userId]
@@ -256,6 +257,15 @@ struct OrganizedReviewCard: View {
             }
             
             HStack {
+                if vm.canDeleteReview(review) {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.plain)
+                }
                 Spacer()
                 Button {
                     Task { await vm.toggleReviewLike(review) }
@@ -278,6 +288,12 @@ struct OrganizedReviewCard: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(isHighlighted ? Color.accentColor.opacity(0.12) : Color.clear)
         )
+        .confirmationDialog("Delete this review?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task { await vm.deleteReview(review) }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
     
     private func avatarPlaceholder(user: UserPublic?) -> some View {
