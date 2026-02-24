@@ -42,6 +42,7 @@ final class UserProfileViewModel: ObservableObject{
     private let activityRepo = ActivityRepository()
 
     private let reviewRepo = ReviewRepository()
+    private var activityRequestUserId: String?
     
     // Load liked restaurant IDs for a given uid
     func getLikedRestaurants(uid: String) async throws -> [String] {
@@ -360,6 +361,7 @@ final class UserProfileViewModel: ObservableObject{
         }
         isLoading = true
         defer { isLoading = false }
+        recentActivities = []
         do {
             if let user = try await repo.get(uid: uid) {
                 currentUser = user
@@ -391,11 +393,14 @@ final class UserProfileViewModel: ObservableObject{
     
     // Fetch recent activities for a user
     func fetchRecentActivities(userId: String) async {
+        activityRequestUserId = userId
         do {
             let activities = try await activityRepo.fetchRecentActivities(userId: userId, limit: 10)
+            guard activityRequestUserId == userId else { return }
             self.recentActivities = activities
         } catch {
             print("Failed to fetch activities: \(error.localizedDescription)")
+            guard activityRequestUserId == userId else { return }
             self.recentActivities = []
         }
     }

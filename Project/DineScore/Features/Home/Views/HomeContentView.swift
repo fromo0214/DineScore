@@ -104,8 +104,13 @@ struct HomeContentView: View {
                                 Text("No featured restaurants available.")
                                     .foregroundColor(Color.accentColor)
                             } else {
-                                ForEach(featuredRestaurants, id: \.id) { restaurant in
-                                    restaurantListRow(restaurant)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(featuredRestaurants, id: \.id) { restaurant in
+                                            featuredRestaurantCard(restaurant)
+                                        }
+                                    }
+                                    .padding(.horizontal, 2)
                                 }
                             }
                         }.padding()
@@ -214,6 +219,56 @@ struct HomeContentView: View {
                     .foregroundColor(Color.accentColor)
             )
         }
+    }
+    
+    private func featuredRestaurantCard(_ restaurant: RestaurantPublic) -> some View {
+        Button {
+            guard let restaurantId = restaurant.id, !restaurantId.isEmpty else { return }
+            selectedRestaurantId = restaurantId
+        } label: {
+            ZStack(alignment: .bottomLeading) {
+                let url = restaurant.coverPicture.flatMap { URL(string: $0) }
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .empty, .failure:
+                        ZStack {
+                            Color.accentColor.opacity(0.25)
+                            Text(restaurant.name.first.map(String.init)?.uppercased() ?? "")
+                                .font(.title)
+                                .bold()
+                                .foregroundColor(Color.backgroundColor.opacity(0.6))
+                        }
+                    @unknown default:
+                        Color.accentColor.opacity(0.25)
+                    }
+                }
+                LinearGradient(
+                    colors: [Color.clear, Color.black.opacity(0.75)],
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(restaurant.name)
+                        .bold()
+                        .lineLimit(2)
+                    Text("Food score: \(formatScore(restaurant.avgFoodScore)), Service score: \(formatScore(restaurant.avgServiceScore))")
+                        .font(.caption)
+                }
+                .foregroundColor(.white)
+                .padding(12)
+            }
+            .frame(width: 250, height: 150)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .accessibilityLabel("View details for \(restaurant.name), food score \(formatScore(restaurant.avgFoodScore)), service score \(formatScore(restaurant.avgServiceScore))")
+    }
+    
+    private func formatScore(_ score: Double?) -> String {
+        score.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "--"
     }
     
     private func formatLocation(city: String?, state: String?) -> String {
