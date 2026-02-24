@@ -452,17 +452,22 @@ struct ReviewsSummaryHeader: View {
 
     @ViewBuilder
     private func summaryCard(title: String, score: Double, background: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 32, weight: .bold))
+                .font(.system(size: 28, weight: .bold))
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
+            Text(String(format: "%.1f", score))
+                .font(.system(size: 34, weight: .heavy))
+                .foregroundColor(.primary)
+
             StarsView(score: score, color: Color(red: 1.0, green: 0.78, blue: 0.29), size: 22)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(background)
