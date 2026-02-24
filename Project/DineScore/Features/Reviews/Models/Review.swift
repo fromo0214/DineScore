@@ -31,7 +31,7 @@ enum PriceValueOption: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct Review: Identifiable, Codable{
+struct Review: Identifiable, Codable, Equatable{
     @DocumentID var id: String?
     var restaurantId: String
     var userId: String
