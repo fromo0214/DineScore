@@ -36,6 +36,34 @@ final class RestaurantRepository{
         return Array(combined.prefix(limit))
     }
     
+    func fetchFeaturedRestaurants(limit: Int = 10) async throws -> [RestaurantPublic] {
+        let snapshot = try await restaurants
+            .order(by: "reviewCount", descending: true)
+            .limit(to: limit)
+            .getDocuments()
+        
+        return snapshot.documents.compactMap { try? $0.data(as: RestaurantPublic.self) }
+    }
+    
+    func fetchTopRatedRestaurants(zipCode: String, limit: Int = 10) async throws -> [RestaurantPublic] {
+        let normalizedZip = zipCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedZip.isEmpty else { return [] }
+        
+        let snapshot = try await restaurants
+            .whereField("zipCode", isEqualTo: normalizedZip)
+            .limit(to: max(limit * 3, limit))
+            .getDocuments()
+        
+        let decoded = snapshot.documents.compactMap { try? $0.data(as: RestaurantPublic.self) }
+        return decoded
+            .sorted {
+                (($0.avgFoodScore ?? 0) + ($0.avgServiceScore ?? 0)) >
+                (($1.avgFoodScore ?? 0) + ($1.avgServiceScore ?? 0))
+            }
+            .prefix(limit)
+            .map { $0 }
+    }
+    
     private func queryPrefix(field: String, q: String, limit: Int) async throws -> [RestaurantPublic] {
         let snapshot = try await restaurants
             .order(by: field)

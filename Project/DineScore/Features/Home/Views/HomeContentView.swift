@@ -3,9 +3,13 @@ import SwiftUI
 struct HomeContentView: View {
     @State private var showAddRestaurant = false
     @StateObject private var vm = SearchViewModel()
+    @StateObject private var userVm = UserProfileViewModel()
     @State private var selectedUserId: String?
     @State private var isSearching = false
     @State private var selectedRestaurantId: String?
+    @State private var featuredRestaurants: [RestaurantPublic] = []
+    @State private var topRatedNearbyRestaurants: [RestaurantPublic] = []
+    private let restaurantRepo = RestaurantRepository()
     
     var body: some View {
         NavigationStack {
@@ -95,12 +99,13 @@ struct HomeContentView: View {
                             Spacer()
                         }.padding()
                         VStack {
-                            HStack {
-                                Text("Featured Restaurants")
-                                    .foregroundColor(Color.backgroundColor)
-                                    .frame(width: 180, height: 80)
-                                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor))
+                            if featuredRestaurants.isEmpty {
+                                Text("No featured restaurants available.")
+                                    .foregroundColor(Color.accentColor)
+                            } else {
+                                ForEach(featuredRestaurants, id: \.id) { restaurant in
+                                    restaurantListRow(restaurant)
+                                }
                             }
                         }.padding()
                         
@@ -109,12 +114,18 @@ struct HomeContentView: View {
                             Spacer()
                         }.padding()
                         VStack {
-                            HStack {
-                                Text("Restaurants")
-                                    .foregroundColor(Color.backgroundColor)
-                                    .frame(width: 150, height: 80)
-                                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor))
+                            if let zipCode = userVm.currentUser?.zipCode?.trimmingCharacters(in: .whitespacesAndNewlines), !zipCode.isEmpty {
+                                if topRatedNearbyRestaurants.isEmpty {
+                                    Text("No top-rated restaurants found for \(zipCode).")
+                                        .foregroundColor(Color.accentColor)
+                                } else {
+                                    ForEach(topRatedNearbyRestaurants, id: \.id) { restaurant in
+                                        restaurantListRow(restaurant)
+                                    }
+                                }
+                            } else {
+                                Text("Add your ZIP code in your profile to see nearby top-rated restaurants.")
+                                    .foregroundColor(Color.accentColor)
                             }
                         }.padding()
                         
@@ -123,12 +134,13 @@ struct HomeContentView: View {
                             Spacer()
                         }.padding()
                         VStack {
-                            HStack {
-                                Text("Favorited Restaurants")
-                                    .foregroundColor(Color.backgroundColor)
-                                    .frame(width: 180, height: 80)
-                                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .foregroundColor(Color.accentColor))
+                            if userVm.likedRestaurantDetails.isEmpty {
+                                Text("You have no liked restaurants yet.")
+                                    .foregroundColor(Color.accentColor)
+                            } else {
+                                ForEach(userVm.likedRestaurantDetails, id: \.id) { restaurant in
+                                    restaurantListRow(restaurant)
+                                }
                             }
                         }.padding()
                     }
@@ -145,7 +157,60 @@ struct HomeContentView: View {
                 .navigationDestination(item: $selectedRestaurantId) {restaurantId in
                     RestaurantView(restaurantId: restaurantId)
                 }
+                .task {
+                    await loadHomeLists()
+                }
             }
+        }
+    }
+    
+    @MainActor
+    private func loadHomeLists() async {
+        await userVm.getAppUser()
+        await userVm.refreshLikedRestaurants()
+        
+        do {
+            featuredRestaurants = try await restaurantRepo.fetchFeaturedRestaurants(limit: 6)
+        } catch {
+            featuredRestaurants = []
+        }
+        
+        if let zipCode = userVm.currentUser?.zipCode?.trimmingCharacters(in: .whitespacesAndNewlines), !zipCode.isEmpty {
+            do {
+                topRatedNearbyRestaurants = try await restaurantRepo.fetchTopRatedRestaurants(zipCode: zipCode, limit: 6)
+            } catch {
+                topRatedNearbyRestaurants = []
+            }
+        } else {
+            topRatedNearbyRestaurants = []
+        }
+    }
+    
+    private func restaurantListRow(_ restaurant: RestaurantPublic) -> some View {
+        let restaurantId = restaurant.id ?? ""
+        return Button {
+            guard !restaurantId.isEmpty else { return }
+            selectedRestaurantId = restaurantId
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(restaurant.name)
+                        .foregroundColor(Color.backgroundColor)
+                        .bold()
+                    Text((restaurant.city ?? "") + ((restaurant.state == nil || restaurant.state?.isEmpty == true) ? "" : ", \(restaurant.state ?? "")"))
+                        .foregroundColor(Color.backgroundColor)
+                        .font(.caption)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(Color.backgroundColor)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 56)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .foregroundColor(Color.accentColor)
+            )
         }
     }
 }
