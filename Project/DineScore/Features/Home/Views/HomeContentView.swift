@@ -10,6 +10,7 @@ struct HomeContentView: View {
     @State private var featuredRestaurants: [RestaurantPublic] = []
     @State private var topRatedNearbyRestaurants: [RestaurantPublic] = []
     private let restaurantRepo = RestaurantRepository()
+    private let defaultRestaurantListLimit = 6
     
     var body: some View {
         NavigationStack {
@@ -170,15 +171,17 @@ struct HomeContentView: View {
         await userVm.refreshLikedRestaurants()
         
         do {
-            featuredRestaurants = try await restaurantRepo.fetchFeaturedRestaurants(limit: 6)
+            featuredRestaurants = try await restaurantRepo.fetchFeaturedRestaurants(limit: defaultRestaurantListLimit)
         } catch {
+            print("Failed to load featured restaurants: \(error.localizedDescription)")
             featuredRestaurants = []
         }
         
         if let zipCode = normalizedUserZipCode {
             do {
-                topRatedNearbyRestaurants = try await restaurantRepo.fetchTopRatedRestaurants(zipCode: zipCode, limit: 6)
+                topRatedNearbyRestaurants = try await restaurantRepo.fetchTopRatedRestaurants(zipCode: zipCode, limit: defaultRestaurantListLimit)
             } catch {
+                print("Failed to load top-rated nearby restaurants: \(error.localizedDescription)")
                 topRatedNearbyRestaurants = []
             }
         } else {
