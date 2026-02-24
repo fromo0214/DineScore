@@ -125,8 +125,12 @@ struct HomeContentView: View {
                                     Text("No top-rated restaurants found for \(zipCode).")
                                         .foregroundColor(Color.accentColor)
                                 } else {
-                                    ForEach(topRatedNearbyRestaurants, id: \.id) { restaurant in
-                                        restaurantListRow(restaurant)
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 16) {
+                                            ForEach(topRatedNearbyRestaurants, id: \.id) { restaurant in
+                                                featuredRestaurantCard(restaurant)
+                                            }
+                                        }
                                     }
                                 }
                             } else {
@@ -144,8 +148,12 @@ struct HomeContentView: View {
                                 Text("You have no liked restaurants yet.")
                                     .foregroundColor(Color.accentColor)
                             } else {
-                                ForEach(userVm.likedRestaurantDetails, id: \.id) { restaurant in
-                                    restaurantListRow(restaurant)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 16) {
+                                        ForEach(userVm.likedRestaurantDetails, id: \.id) { restaurant in
+                                            featuredRestaurantCard(restaurant)
+                                        }
+                                    }
                                 }
                             }
                         }.padding()
