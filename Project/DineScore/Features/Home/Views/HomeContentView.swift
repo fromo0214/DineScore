@@ -236,6 +236,7 @@ struct HomeContentView: View {
         } label: {
             ZStack(alignment: .bottomLeading) {
                 let url = restaurant.coverPicture.flatMap { URL(string: $0) }
+                let hasCoverPhoto = !(restaurant.coverPicture?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
@@ -255,7 +256,7 @@ struct HomeContentView: View {
                     }
                 }
                 LinearGradient(
-                    colors: [Color.clear, Color.black.opacity(0.75)],
+                    colors: [Color.clear, Color.black.opacity(0.85)],
                     startPoint: .center,
                     endPoint: .bottom
                 )
@@ -268,6 +269,8 @@ struct HomeContentView: View {
                 }
                 .foregroundColor(.white)
                 .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(hasCoverPhoto ? Color.black.opacity(0.45) : Color.clear)
             }
             .frame(width: 250, height: 150)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
