@@ -10,10 +10,14 @@ import FirebaseAuth
 import GoogleSignIn
 import GoogleSignInSwift
 import AuthenticationServices
+import CryptoKit
+import FacebookLogin
+import UIKit
 
 struct SignInView: View {
     //ViewModel that talks to AuthService
     @StateObject private var vm = SignInViewModel()
+    private let authService = AuthService()
     
     //App flags driving navigation
     @AppStorage("userIsLoggedIn") private var userIsLoggedIn = false
@@ -22,6 +26,7 @@ struct SignInView: View {
     // View-only state
     @State private var showRegister = false
     @State private var showForgotPassword = false
+    @State private var currentNonce: String?
     
     //keyboard focus fields destinations
     enum Field:Hashable {
@@ -53,7 +58,7 @@ struct SignInView: View {
             
             //checks if user is logged in and has seen slideshow or not
             _ = Auth.auth().addStateDidChangeListener{ auth, user in
-                if let user = user, user.isEmailVerified {
+                if let user = user, (user.isEmailVerified || user.providerData.contains(where: { $0.providerID != "password" })) {
                     print("✅ Firebase Auth Listener: user logged in and verified")
                     print("hasSeenSlideshow = \(hasSeenSlideshow)")
                     if UserDefaults.standard.object(forKey: "hasSeenSlideshow") == nil {
@@ -239,14 +244,17 @@ struct SignInView: View {
                         .signIn,
                         onRequest: { request in
                             request.requestedScopes = [.fullName, .email]
+                            let nonce = randomNonceString()
+                            currentNonce = nonce
+                            request.nonce = sha256(nonce)
                         },
                         onCompletion: { result in
                             switch result {
                             case .success(let authResults):
-                                print("✅ Authorization successful: \(authResults)")
-                                // Call your handleAppleSignIn() logic here to authenticate with Firebase
+                                handleAppleSignIn(authResults)
                             case .failure(let error):
                                 print("❌ Authorization failed: \(error.localizedDescription)")
+                                vm.errorMessage = error.localizedDescription
                             }
                         }
                     )
@@ -267,11 +275,125 @@ struct SignInView: View {
     
     
     func handleGoogleSignIn(){
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            vm.errorMessage = "Missing Firebase client ID."
+            return
+        }
         
+        guard let rootVC = rootViewController() else {
+            vm.errorMessage = "Unable to start Google sign-in."
+            return
+        }
+        
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { result, error in
+            if let error {
+                vm.errorMessage = error.localizedDescription
+                return
+            }
+            
+            guard
+                let user = result?.user,
+                let idToken = user.idToken?.tokenString
+            else {
+                vm.errorMessage = "Google sign-in failed."
+                return
+            }
+            
+            Task {
+                do {
+                    try await authService.signInWithGoogle(idToken: idToken, accessToken: user.accessToken.tokenString)
+                    vm.errorMessage = ""
+                    UserDefaults.standard.set(true, forKey: "userIsLoggedIn")
+                } catch {
+                    vm.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
     
     func handleFacebookSignIn(){
+        guard let rootVC = rootViewController() else {
+            vm.errorMessage = "Unable to start Facebook sign-in."
+            return
+        }
         
+        LoginManager().logIn(permissions: ["public_profile", "email"], from: rootVC) { result, error in
+            if let error {
+                vm.errorMessage = error.localizedDescription
+                return
+            }
+            
+            guard let result = result, !result.isCancelled, let accessToken = AccessToken.current?.tokenString else {
+                vm.errorMessage = "Facebook sign-in was cancelled."
+                return
+            }
+            
+            Task {
+                do {
+                    try await authService.signInWithFacebook(accessToken: accessToken)
+                    vm.errorMessage = ""
+                    UserDefaults.standard.set(true, forKey: "userIsLoggedIn")
+                } catch {
+                    vm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    func handleAppleSignIn(_ authResults: ASAuthorization) {
+        guard
+            let credential = authResults.credential as? ASAuthorizationAppleIDCredential,
+            let identityToken = credential.identityToken,
+            let nonce = currentNonce,
+            let idTokenString = String(data: identityToken, encoding: .utf8)
+        else {
+            vm.errorMessage = "Apple sign-in failed."
+            return
+        }
+        
+        Task {
+            do {
+                try await authService.signInWithApple(idToken: idTokenString, rawNonce: nonce)
+                vm.errorMessage = ""
+                UserDefaults.standard.set(true, forKey: "userIsLoggedIn")
+            } catch {
+                vm.errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
+    func rootViewController() -> UIViewController? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .rootViewController
+    }
+    
+    func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = ""
+        var remainingLength = length
+
+        while remainingLength > 0 {
+            let randoms: [UInt8] = (0..<16).map { _ in UInt8.random(in: 0...255) }
+            randoms.forEach { random in
+                if remainingLength == 0 { return }
+                if random < charset.count {
+                    result.append(charset[Int(random)])
+                    remainingLength -= 1
+                }
+            }
+        }
+        return result
+    }
+    
+    func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.map { String(format: "%02x", $0) }.joined()
     }
     
     
